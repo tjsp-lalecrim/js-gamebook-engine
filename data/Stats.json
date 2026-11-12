@@ -1,0 +1,12 @@
+{
+  "defaultStats": {
+    "forca": 50,
+    "inteligencia": 50,
+    "voluntade": 50,
+    "agilidade": 50,
+    "velocidade": 50,
+    "resistencia": 50,
+    "sorte": 50,
+    "personalidade": 50
+  }
+}

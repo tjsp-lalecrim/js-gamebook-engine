@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livro-Jogo: Elder Scrolls Arena</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <main class="book-container">
+    <!-- TELA 1: BIBLIOTECA -->
+    <section id="library-screen">
+      <header>
+        <h1>Elder Scrolls: Arena</h1>
+        <button id="audio-toggle-btn" class="nav-btn" title="Ativar/Desativar Sons">🔊 Som: Ligado</button>
+      </header>
+      <p class="library-subtitle">Escolha sua campanha, Campeão Eterno:</p>
+      <div id="books-list" class="books-list"></div>
+    </section>
+
+    <!-- TELA 2: LEITURA DO LIVRO -->
+    <section id="game-screen" class="hidden">
+      <header>
+        <div>
+          <button id="back-btn" class="nav-btn">← Livros</button>
+          <h1 id="book-title">Título</h1>
+          <span id="chapter-title" class="chapter-badge">Capítulo I</span>
+        </div>
+        <button id="reset-btn" class="nav-btn">↺ Reiniciar</button>
+      </header>
+
+      <!-- Seletor de Capítulos -->
+      <div id="chapter-nav" class="chapter-nav"></div>
+
+      <!-- BOTÕES DE ACESSO RÁPIDO (MODAIS) -->
+      <div class="game-top-actions">
+        <button id="stats-btn" class="nav-btn action-pill">📊 Atributos</button>
+        <button id="inventory-btn" class="nav-btn action-pill">🎒 Mochila <span id="inv-count" class="badge-count">0</span></button>
+        <button id="journal-btn" class="nav-btn action-pill">📜 Diário</button>
+      </div>
+
+      <div class="image-wrapper">
+        <img id="story-image" src="" alt="Cena da história">
+      </div>
+
+      <p id="story-text" class="story-text" title="Clique para pular a digitação"></p>
+      <div id="options-container" class="options-container"></div>
+    </section>
+
+    <!-- MODAL DE ATRIBUTOS -->
+    <div id="stats-modal" class="modal hidden">
+      <div class="modal-content">
+        <header class="modal-header">
+          <h2>Atributos do Campeão</h2>
+          <button id="close-stats-btn" class="nav-btn">✕</button>
+        </header>
+        <div id="stats-content" class="modal-list-content">
+          <!-- Preenchido via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DA MOCHILA -->
+    <div id="inventory-modal" class="modal hidden">
+      <div class="modal-content">
+        <header class="modal-header">
+          <h2>Mochila</h2>
+          <button id="close-inventory-btn" class="nav-btn">✕</button>
+        </header>
+        <div id="inventory-content" class="modal-list-content">
+          <p>A mochila está vazia.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE ROLAGEM DE DADO (RPG) -->
+    <div id="dice-modal" class="modal hidden">
+      <div class="modal-content dice-modal-content">
+        <h2 id="dice-check-title">Teste de Atributo</h2>
+        <p id="dice-dc-info" class="dice-info">Dificuldade (CD): 15</p>
+        
+        <div id="dice-box" class="dice-box">🎲</div>
+        
+        <div id="dice-math" class="dice-math">Rolando d20...</div>
+        <div id="dice-result-banner" class="dice-result-banner hidden"></div>
+        
+        <button id="dice-continue-btn" class="option-btn hidden" style="text-align: center; margin-top: 1rem;">
+          Continuar História →
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL DO DIÁRIO -->
+    <div id="journal-modal" class="modal hidden">
+      <div class="modal-content">
+        <header class="modal-header">
+          <h2>Diário do Campeão</h2>
+          <button id="close-journal-btn" class="nav-btn">✕</button>
+        </header>
+        <div id="journal-content" class="modal-list-content">
+          <p>Sua jornada ainda está no começo...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+[
+  {
+    "id": "arena-completo",
+    "title": "The Elder Scrolls: Arena",
+    "description": "A saga completa do Campeão Eterno dividida em capítulos para resgatar Uriel Septim VII.",
+    "initialStats": {
+      "forca": 12,
+      "agilidade": 11,
+      "inteligencia": 10
+    },
+    "chapters": [
+      {
+        "id": "cap-1",
+        "title": "Capítulo I: As Masmorras Imperiais",
+        "startBlock": "cela_inicio",
+        "blocks": {
+          "cela_inicio": {
+            "image": "https://picsum.photos/seed/dungeon/650/300",
+            "content": "Você desperta nas celas úmidas sob a Cidade Imperial. O espectro de Ria Silmane surge diante das grades: 'Jagar Tharn traiu o Imperador. Você precisa escapar e encontrar o Cajado do Caos.'",
+            "options": [
+              {
+                "text": "Arrombar a fechadura enferrujada da cela",
+                "diceRoll": { "stat": "forca", "dc": 15 },
+                "nextBlock": "corredor_guarda",
+                "failBlock": "falha_grade"
+              },
+              {
+                "text": "Procurar uma passagem solta nas pedras do chão",
+                "diceRoll": { "stat": "inteligencia", "dc": 13 },
+                "nextBlock": "tunel_secreto",
+                "failBlock": "falha_grade"
+              }
+            ]
+          },
+          "falha_grade": {
+            "image": "https://picsum.photos/seed/trap/650/300",
+            "content": "O barulho ecoa pelo corredor! Um goblin vigia se aproxima, mas tropeça e deixa cair uma chave antes de recuar assustado.",
+            "giveItem": "Chave de Ferro",
+            "options": [
+              { "text": "Usar a Chave de Ferro e sair da cela", "nextBlock": "corredor_guarda" }
+            ]
+          },
+          "tunel_secreto": {
+            "image": "https://picsum.photos/seed/tunnel/650/300",
+            "content": "Você encontra um alçapão antigo que leva diretamente aos esgotos reais, evitando os guardas e encontrando uma adaga abandonada.",
+            "giveItem": "Adaga Imperial",
+            "options": [
+              { "text": "Seguir para o Portal de Saída", "nextBlock": "portal_cap1" }
+            ]
+          },
+          "corredor_guarda": {
+            "image": "https://picsum.photos/seed/guard/650/300",
+            "content": "Um guarda corrompido por Tharn bloqueia a ponte sobre o fosso subterrâneo.",
+            "options": [
+              {
+                "text": "Atacar o guarda em combate direto",
+                "diceRoll": { "stat": "forca", "dc": 16 },
+                "nextBlock": "portal_cap1",
+                "failBlock": "ferido_guarda"
+              },
+              {
+                "text": "Esgueirar-se pelas sombras da parede",
+                "diceRoll": { "stat": "agilidade", "dc": 14 },
+                "nextBlock": "portal_cap1",
+                "failBlock": "ferido_guarda"
+              }
+            ]
+          },
+          "ferido_guarda": {
+            "image": "https://picsum.photos/seed/blood/650/300",
+            "content": "Você recebe um corte no braço durante a fuga, mas consegue empurrar o guarda no fosso e alcançar a câmara seguinte.",
+            "modifyStats": { "forca": -1 },
+            "options": [
+              { "text": "Entrar na Câmara do Portal", "nextBlock": "portal_cap1" }
+            ]
+          },
+          "portal_cap1": {
+            "image": "https://picsum.photos/seed/portal/650/300",
+            "content": "Ria Silmane abre um portal dimensional que leva às províncias externas de Tamriel. Você sobreviveu às masmorras!",
+            "options": [
+              { "text": "Avançar para o Capítulo II →", "nextChapter": 1 }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cap-2",
+        "title": "Capítulo II: O Labirinto de Cristal",
+        "startBlock": "entrada_ruinas",
+        "blocks": {
+          "entrada_ruinas": {
+            "image": "https://picsum.photos/seed/ruins/650/300",
+            "content": "Seguindo as visões de Ria, você viaja até as montanhas geladas de Skyrim para recuperar o primeiro fragmento do Cajado do Caos.",
+            "options": [
+              {
+                "text": "Decifrar as runas antigas na porta do templo",
+                "diceRoll": { "stat": "inteligencia", "dc": 15 },
+                "nextBlock": "salao_cajado",
+                "failBlock": "emboscada_gelo"
+              },
+              {
+                "text": "Usar a Adaga Imperial como alavanca no mecanismo",
+                "requiredItem": "Adaga Imperial",
+                "nextBlock": "salao_cajado"
+              }
+            ]
+          },
+          "emboscada_gelo": {
+            "image": "https://picsum.photos/seed/ice/650/300",
+            "content": "As runas ativam uma armadilha de gelo! Você precisa saltar antes que o teto desabe.",
+            "options": [
+              {
+                "text": "Saltar para dentro do salão principal",
+                "diceRoll": { "stat": "agilidade", "dc": 14 },
+                "nextBlock": "salao_cajado",
+                "failBlock": "fim_congelado"
+              }
+            ]
+          },
+          "salao_cajado": {
+            "image": "https://picsum.photos/seed/staff/650/300",
+            "content": "Sobre o altar de cristal repousa o Primeiro Fragmento do Cajado do Caos! O poder arcano pulsa em suas mãos.",
+            "giveItem": "Fragmento do Cajado (1/8)",
+            "options": [
+              { "text": "Avançar para o Capítulo III →", "nextChapter": 2 }
+            ]
+          },
+          "fim_congelado": {
+            "image": "https://picsum.photos/seed/gameover/650/300",
+            "content": "O gelo sela a entrada do templo para sempre. Sua jornada termina nas montanhas de Skyrim.",
+            "options": []
+          }
+        }
+      },
+      {
+        "id": "cap-3",
+        "title": "Capítulo III: O Trono Usurpado",
+        "startBlock": "palacio_portoes",
+        "blocks": {
+          "palacio_portoes": {
+            "image": "https://picsum.photos/seed/palace/650/300",
+            "content": "Com o Cajado do Caos reforjado em mãos, você retorna ao Palácio Imperial. Jagar Tharn aguarda no Salão do Trono.",
+            "options": [
+              {
+                "text": "Canalizar o poder do Fragmento contra Jagar Tharn",
+                "requiredItem": "Fragmento do Cajado (1/8)",
+                "diceRoll": { "stat": "inteligencia", "dc": 14 },
+                "nextBlock": "vitoria_final",
+                "failBlock": "derrota_tharn"
+              },
+              {
+                "text": "Avançar com força física contra o mago",
+                "diceRoll": { "stat": "forca", "dc": 18 },
+                "nextBlock": "vitoria_final",
+                "failBlock": "derrota_tharn"
+              }
+            ]
+          },
+          "vitoria_final": {
+            "image": "https://picsum.photos/seed/crown/650/300",
+            "content": "A energia do Cajado destrói a ilusão de Jagar Tharn. A fenda dimensional se abre e o verdadeiro Imperador Uriel Septim VII retorna ao trono, nomeando você o Campeão Eterno!",
+            "options": []
+          },
+          "derrota_tharn": {
+            "image": "https://picsum.photos/seed/fire/650/300",
+            "content": "Um raio arcano de Tharn atinge seu peito antes que você possa reagir. O Império cai nas trevas.",
+            "options": []
+          }
+        }
+      }
+    ]
+  }
+]

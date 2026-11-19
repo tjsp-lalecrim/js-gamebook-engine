@@ -21,12 +21,14 @@
               {
                 "text": "Arrombar a fechadura enferrujada da cela",
                 "diceRoll": { "stat": "forca", "dc": 12 },
+                "gainXp": 35,
                 "nextBlock": "corredor_guarda",
                 "failBlock": "falha_grade"
               },
               {
                 "text": "Procurar uma passagem solta nas pedras do chão",
                 "diceRoll": { "stat": "inteligencia", "dc": 10 },
+                "gainXp": 35,
                 "nextBlock": "tunel_secreto",
                 "failBlock": "falha_grade"
               }
@@ -36,6 +38,7 @@
             "image": "https://picsum.photos/seed/trap/650/300",
             "content": "O barulho ecoa pelo corredor! Um goblin vigia se aproxima, mas tropeça e deixa cair uma chave antes de recuar assustado.",
             "giveItem": "Chave de Ferro",
+            "giveXp": 20,
             "options": [
               { "text": "Usar a Chave de Ferro e sair da cela", "nextBlock": "corredor_guarda" }
             ]
@@ -44,6 +47,7 @@
             "image": "https://picsum.photos/seed/tunnel/650/300",
             "content": "Você encontra um alçapão antigo que leva diretamente aos esgotos reais, evitando os guardas e encontrando uma adaga abandonada.",
             "giveItem": "Adaga Imperial",
+            "giveXp": 45,
             "options": [
               { "text": "Seguir para o Portal de Saída", "nextBlock": "portal_cap1" }
             ]
@@ -55,12 +59,14 @@
               {
                 "text": "Atacar o guarda em combate direto",
                 "diceRoll": { "stat": "forca", "dc": 13 },
+                "gainXp": 50,
                 "nextBlock": "portal_cap1",
                 "failBlock": "ferido_guarda"
               },
               {
                 "text": "Esgueirar-se pelas sombras da parede",
                 "diceRoll": { "stat": "agilidade", "dc": 11 },
+                "gainXp": 50,
                 "nextBlock": "portal_cap1",
                 "failBlock": "ferido_guarda"
               }
@@ -70,6 +76,7 @@
             "image": "https://picsum.photos/seed/blood/650/300",
             "content": "Você recebe um corte no braço durante a fuga, mas consegue empurrar o guarda no fosso e alcançar a câmara seguinte.",
             "modifyStats": { "forca": -5 },
+            "giveXp": 25,
             "options": [
               { "text": "Entrar na Câmara do Portal", "nextBlock": "portal_cap1" }
             ]
@@ -77,6 +84,7 @@
           "portal_cap1": {
             "image": "https://picsum.photos/seed/portal/650/300",
             "content": "Ria Silmane abre um portal dimensional que leva às províncias externas de Tamriel. Você sobreviveu às masmorras!",
+            "giveXp": 60,
             "options": [
               { "text": "Avançar para o Capítulo II →", "nextChapter": 1 }
             ]
@@ -95,12 +103,14 @@
               {
                 "text": "Decifrar as runas antigas na porta do templo",
                 "diceRoll": { "stat": "inteligencia", "dc": 12 },
+                "gainXp": 55,
                 "nextBlock": "salao_cajado",
                 "failBlock": "emboscada_gelo"
               },
               {
                 "text": "Usar a Adaga Imperial como alavanca no mecanismo",
                 "requiredItem": "Adaga Imperial",
+                "gainXp": 45,
                 "nextBlock": "salao_cajado"
               }
             ]
@@ -112,6 +122,7 @@
               {
                 "text": "Saltar para dentro do salão principal",
                 "diceRoll": { "stat": "agilidade", "dc": 11 },
+                "gainXp": 40,
                 "nextBlock": "salao_cajado",
                 "failBlock": "fim_congelado"
               }
@@ -121,6 +132,7 @@
             "image": "https://picsum.photos/seed/staff/650/300",
             "content": "Sobre o altar de cristal repousa o Primeiro Fragmento do Cajado do Caos! O poder arcano pulsa em suas mãos.",
             "giveItem": "Fragmento do Cajado (1/8)",
+            "giveXp": 80,
             "options": [
               { "text": "Avançar para o Capítulo III →", "nextChapter": 2 }
             ]
@@ -145,12 +157,14 @@
                 "text": "Canalizar o poder do Fragmento contra Jagar Tharn",
                 "requiredItem": "Fragmento do Cajado (1/8)",
                 "diceRoll": { "stat": "inteligencia", "dc": 12 },
+                "gainXp": 100,
                 "nextBlock": "vitoria_final",
                 "failBlock": "derrota_tharn"
               },
               {
                 "text": "Avançar com força física contra o mago",
                 "diceRoll": { "stat": "forca", "dc": 15 },
+                "gainXp": 100,
                 "nextBlock": "vitoria_final",
                 "failBlock": "derrota_tharn"
               }
@@ -159,6 +173,7 @@
           "vitoria_final": {
             "image": "https://picsum.photos/seed/crown/650/300",
             "content": "A energia do Cajado destrói a ilusão de Jagar Tharn. A fenda dimensional se abre e o verdadeiro Imperador Uriel Septim VII retorna ao trono, nomeando você o Campeão Eterno!",
+            "giveXp": 150,
             "options": []
           },
           "derrota_tharn": {

@@ -23,6 +23,11 @@ function startBook(book) {
   loadCurrentBlock();
 }
 
+function syncHudBadges() {
+  ui.modals.renderInventory(engine.state.inventory);
+  ui.renderStatsButtonBadge(engine.state.progression);
+}
+
 function loadCurrentBlock() {
   const chapter = engine.getCurrentChapter();
   const block = engine.getCurrentBlock();
@@ -40,25 +45,36 @@ function loadCurrentBlock() {
     }
   );
 
-  // Atualiza contador da mochila
-  ui.modals.renderInventory(engine.state.inventory);
+  syncHudBadges();
 
   ui.renderBlockContent(block, () => {
     ui.renderOptions(block.options, engine.state.inventory, engine, handleOptionSelect, handleRestart);
   });
 }
 
+function applyOptionXp(option, shouldSave = true) {
+  const xpAmount = option.gainXp ?? option.xp ?? 0;
+  if (xpAmount > 0) {
+    const res = engine.gainExperience(xpAmount, shouldSave);
+    if (res.leveledUpCount > 0) {
+      playSound('success');
+    }
+  }
+}
+
 function handleOptionSelect(option) {
   playSound('click');
 
   if (option.nextChapter !== undefined) {
-    if (option.gainStats) engine.applyStatChanges(option.gainStats);
+    if (option.gainStats) engine.applyStatChanges(option.gainStats, false);
+    applyOptionXp(option, false);
     engine.goToChapter(option.nextChapter);
     loadCurrentBlock();
   } else if (option.diceRoll) {
     executeDiceCheck(option);
   } else {
-    if (option.gainStats) engine.applyStatChanges(option.gainStats);
+    if (option.gainStats) engine.applyStatChanges(option.gainStats, false);
+    applyOptionXp(option, false);
     engine.moveToBlock(option.nextBlock);
     loadCurrentBlock();
   }
@@ -88,8 +104,11 @@ function executeDiceCheck(option) {
       ui.modals.finalizeDiceCheck(result, () => {
         playSound('click');
 
-        if (result.success && option.gainStats) {
-          engine.applyStatChanges(option.gainStats);
+        if (result.success) {
+          if (option.gainStats) {
+            engine.applyStatChanges(option.gainStats, false);
+          }
+          applyOptionXp(option, false);
         }
 
         const nextBlockId = result.success ? option.nextBlock : option.failBlock;
@@ -98,6 +117,18 @@ function executeDiceCheck(option) {
       });
     }
   }, 65);
+}
+
+function handleAllocateStat(statName) {
+  const changed = engine.spendStatPoint(statName, 5);
+  if (changed) {
+    playSound('success');
+    syncHudBadges();
+    ui.modals.renderStats({
+      stats: engine.state.stats,
+      progression: engine.state.progression
+    }, handleAllocateStat);
+  }
 }
 
 function handleRestart() {
@@ -131,7 +162,10 @@ ui.elements.backBtn.addEventListener('click', () => {
 // Eventos dos Modais
 ui.elements.statsBtn.addEventListener('click', () => {
   playSound('click');
-  ui.modals.toggle('stats', true, engine.state.stats);
+  ui.modals.toggle('stats', true, {
+    stats: engine.state.stats,
+    progression: engine.state.progression
+  }, handleAllocateStat);
 });
 ui.elements.closeStatsBtn.addEventListener('click', () => {
   playSound('click');

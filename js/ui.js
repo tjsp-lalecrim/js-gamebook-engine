@@ -62,6 +62,13 @@ export class UIManager {
     this.elements.chapterTitle.textContent = chapterTitle;
   }
 
+  renderStatsButtonBadge(progression) {
+    const level = progression?.level ?? 1;
+    const pending = progression?.pendingStatPoints ?? 0;
+    const alertSuffix = pending > 0 ? ` ✨+${pending}` : '';
+    this.elements.statsBtn.innerHTML = `📊 Atributos <span class="badge-count">Nv.${level}${alertSuffix}</span>`;
+  }
+
   renderChapterNav(chapters, currentIndex, unlockedIndex, onSelectChapter) {
     this.elements.chapterNav.innerHTML = '';
     chapters.forEach((chap, idx) => {
@@ -143,6 +150,11 @@ export class UIManager {
         const chance = engine.getSuccessChance(option.diceRoll.stat, option.diceRoll.dc);
         const statName = option.diceRoll.stat.toUpperCase();
         label += ` [🎲 ${statName} | Chance: ${chance}%]`;
+      }
+
+      const xpReward = option.gainXp ?? option.xp ?? 0;
+      if (xpReward > 0) {
+        label += ` [+${xpReward} XP]`;
       }
 
       this.createOptionButton(label, () => onSelectOption(option), !hasItem);

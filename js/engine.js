@@ -1,4 +1,5 @@
 import { DiceSystem } from './dice.js';
+import { ProgressionSystem } from './progression.js';
 
 const SAVE_PREFIX = 'livro_jogo_cap_save_';
 
@@ -17,7 +18,26 @@ export class GameEngine {
       blockId: null,
       inventory: [],
       stats: {},
+      progression: ProgressionSystem.createInitialProgression(),
       history: []
+    };
+  }
+
+  normalizeLoadedState(savedState) {
+    const base = this.createEmptyState();
+    const mergedProgression = {
+      ...ProgressionSystem.createInitialProgression(),
+      ...(savedState?.progression || {})
+    };
+    mergedProgression.xpToNextLevel = ProgressionSystem.getXpForNextLevel(mergedProgression.level);
+
+    return {
+      ...base,
+      ...savedState,
+      inventory: Array.isArray(savedState?.inventory) ? savedState.inventory : [],
+      stats: savedState?.stats || {},
+      progression: mergedProgression,
+      history: Array.isArray(savedState?.history) ? savedState.history : []
     };
   }
 
@@ -55,7 +75,7 @@ export class GameEngine {
     const savedData = localStorage.getItem(SAVE_PREFIX + book.id);
 
     if (savedData) {
-      this.state = JSON.parse(savedData);
+      this.state = this.normalizeLoadedState(JSON.parse(savedData));
       return this.state;
     }
 
@@ -65,10 +85,10 @@ export class GameEngine {
       blockId: book.chapters[0].startBlock,
       inventory: [],
       stats: this.buildInitialStats(book),
+      progression: ProgressionSystem.createInitialProgression(),
       history: []
     };
 
-    // Processa o bloco inicial para registrar no diário e aplicar efeitos iniciais
     this.moveToBlock(this.state.blockId);
     return this.state;
   }
@@ -93,6 +113,48 @@ export class GameEngine {
     return this.moveToBlock(chapter.startBlock);
   }
 
+  recordLog(chapterTitle, message) {
+    const logEntry = `[${chapterTitle}] ${message}`;
+    if (this.state.history[this.state.history.length - 1] !== logEntry) {
+      this.state.history.push(logEntry);
+    }
+  }
+
+  gainExperience(amount, shouldSave = true) {
+    const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
+    const result = ProgressionSystem.grantXp(this.state.progression, this.state.stats, amount);
+
+    if (result.gained > 0) {
+      this.recordLog(chapterTitle, `Você recebeu +${result.gained} de XP.`);
+    }
+
+    if (result.leveledUpCount > 0) {
+      this.recordLog(
+        chapterTitle,
+        `Subiu para o Nível ${result.newLevel}! (+${result.pointsAwarded} pontos de atributo disponíveis)`
+      );
+    }
+
+    if (shouldSave) {
+      this.saveProgress();
+    }
+
+    return result;
+  }
+
+  spendStatPoint(statName, step = 5) {
+    const allocated = ProgressionSystem.allocateStatPoint(
+      this.state.progression,
+      this.state.stats,
+      statName,
+      step
+    );
+    if (allocated) {
+      this.saveProgress();
+    }
+    return allocated;
+  }
+
   moveToBlock(blockId) {
     const chapter = this.getCurrentChapter();
     const block = chapter?.blocks[blockId];
@@ -112,9 +174,11 @@ export class GameEngine {
       this.applyStatChanges(block.modifyStats, false);
     }
 
-    const logEntry = `[${chapter.title}] ${block.content}`;
-    if (this.state.history[this.state.history.length - 1] !== logEntry) {
-      this.state.history.push(logEntry);
+    this.recordLog(chapter.title, block.content);
+
+    const blockXp = block.giveXp ?? block.xp ?? 0;
+    if (blockXp > 0) {
+      this.gainExperience(blockXp, false);
     }
 
     this.saveProgress();
@@ -149,6 +213,7 @@ export class GameEngine {
       blockId: this.currentBook.chapters[0].startBlock,
       inventory: [],
       stats: this.buildInitialStats(this.currentBook),
+      progression: ProgressionSystem.createInitialProgression(),
       history: []
     };
 

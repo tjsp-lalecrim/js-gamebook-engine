@@ -27,24 +27,76 @@ export class ModalManager {
     return mod >= 0 ? `+${mod}` : `${mod}`;
   }
 
-  renderStats(stats) {
+  renderProgressionHeader(progression) {
+    const level = progression?.level ?? 1;
+    const xp = progression?.xp ?? 0;
+    const xpToNext = progression?.xpToNextLevel ?? 100;
+    const pending = progression?.pendingStatPoints ?? 0;
+    const pct = Math.max(0, Math.min(100, Math.round((xp / xpToNext) * 100)));
+
+    const pendingBadge = pending > 0
+      ? `<div class="pending-points-banner">✨ Pontos para distribuir: <strong>${pending}</strong></div>`
+      : '';
+
+    return `
+      <div class="progression-card">
+        <div class="progression-top">
+          <span class="level-pill">Nível ${level}</span>
+          <span class="xp-label">XP: ${xp} / ${xpToNext}</span>
+        </div>
+        <div class="xp-bar-track">
+          <div class="xp-bar-fill" style="width: ${pct}%;"></div>
+        </div>
+        ${pendingBadge}
+      </div>
+    `;
+  }
+
+  renderStats(payload, onAllocateStat = null) {
+    const stats = payload?.stats ?? payload;
+    const progression = payload?.progression;
+
     if (!stats || Object.keys(stats).length === 0) {
       this.elements.statsContent.innerHTML = '<p>Nenhum atributo registrado.</p>';
       return;
     }
 
-    this.elements.statsContent.innerHTML = Object.entries(stats)
+    const pendingPoints = progression?.pendingStatPoints ?? 0;
+    const headerHtml = progression ? this.renderProgressionHeader(progression) : '';
+
+    const rowsHtml = Object.entries(stats)
       .map(([stat, value]) => {
         const mod = DiceSystem.getModifier(value);
         const modText = this.formatModifier(mod);
+        const canAdd = pendingPoints > 0 && value < 100;
+        const step = Math.min(5, pendingPoints, 100 - value);
+
+        const actionBtn = pendingPoints > 0
+          ? `<button class="stat-add-btn" data-stat="${stat}" ${!canAdd ? 'disabled' : ''}>+${step}</button>`
+          : '';
+
         return `
           <div class="stat-row">
             <span>${stat}</span>
-            <span>${value} <small class="stat-mod">(${modText})</small></span>
+            <div class="stat-value-group">
+              <span>${value} <small class="stat-mod">(${modText})</small></span>
+              ${actionBtn}
+            </div>
           </div>
         `;
       })
       .join('');
+
+    this.elements.statsContent.innerHTML = `${headerHtml}${rowsHtml}`;
+
+    if (onAllocateStat) {
+      this.elements.statsContent.querySelectorAll('.stat-add-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const statName = btn.getAttribute('data-stat');
+          onAllocateStat(statName);
+        });
+      });
+    }
   }
 
   renderInventory(inventory) {
@@ -71,9 +123,9 @@ export class ModalManager {
       .join('');
   }
 
-  toggle(modalName, show, data = null) {
+  toggle(modalName, show, data = null, onAllocateStat = null) {
     if (modalName === 'stats') {
-      if (show) this.renderStats(data);
+      if (show) this.renderStats(data, onAllocateStat);
       this.elements.statsModal.classList.toggle('hidden', !show);
     } else if (modalName === 'inventory') {
       if (show) this.renderInventory(data);

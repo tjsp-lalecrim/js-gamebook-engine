@@ -14,10 +14,11 @@ body {
   font-family: Georgia, 'Times New Roman', serif;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  min-height: 100dvh;
-  padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
-  line-height: 1.55;
+  align-items: center;
+  height: 100dvh;
+  overflow: hidden;
+  padding: max(0.45rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.45rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+  line-height: 1.4;
 }
 
 button {
@@ -29,61 +30,102 @@ button {
   background-color: #262321;
   width: 100%;
   max-width: 100%;
-  padding: 1rem;
+  height: 100%;
+  max-height: 100dvh;
+  padding: 0.75rem;
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   border: 1px solid #332e2b;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.screen-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .hidden {
   display: none !important;
 }
 
-/* Cabeçalhos (Base Mobile) */
+/* Cabeçalhos Compactos */
 .screen-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 0.5rem;
   border-bottom: 1px solid #3d3835;
-  padding-bottom: 0.85rem;
-  margin-bottom: 1rem;
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.55rem;
+  flex-shrink: 0;
 }
 
 .header-main {
   min-width: 0;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-titles {
+  min-width: 0;
+  flex: 1;
 }
 
 h1 {
-  font-size: clamp(1.2rem, 4.5vw, 1.5rem);
+  font-size: clamp(1rem, 3.8vw, 1.35rem);
   color: #d4a359;
-  line-height: 1.25;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 h2 {
-  font-size: clamp(1.05rem, 3.8vw, 1.25rem);
+  font-size: clamp(1rem, 3.6vw, 1.2rem);
+}
+
+.chapter-badge {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.76rem;
+  color: #a89f99;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .library-subtitle {
   color: #a89f99;
-  margin-bottom: 1rem;
-  font-size: 0.92rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.88rem;
+  flex-shrink: 0;
 }
 
 .books-list {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.6rem;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
 }
 
 .book-card {
   background-color: #332f2c;
   border: 1px solid #4d4642;
-  padding: 1rem;
+  padding: 0.8rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.15s;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
 }
 
 .book-card:hover,
@@ -93,36 +135,37 @@ h2 {
 
 .book-card h2 {
   color: #d4a359;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 }
 
 .book-card p {
   color: #b8afa6;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .book-chapters-count {
   color: #d4a359;
   display: block;
-  margin-top: 0.5rem;
-  font-size: 0.82rem;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
 }
 
 .nav-btn {
   background: #1f1c1a;
   border: 1px solid #5c544f;
   color: #d8d0c3;
-  min-height: 40px;
-  padding: 0.45rem 0.75rem;
+  min-height: 36px;
+  padding: 0.35rem 0.6rem;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-family: inherit;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.3rem;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-btn:hover,
@@ -131,39 +174,27 @@ h2 {
   border-color: #d4a359;
 }
 
-#back-btn {
-  margin-bottom: 0.5rem;
-  min-height: 36px;
-  padding: 0.3rem 0.65rem;
-  font-size: 0.8rem;
+/* Navegação de Quests e Capítulos em linha compacta */
+.nav-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+  flex-shrink: 0;
 }
 
-.chapter-badge {
-  display: block;
-  margin-top: 0.3rem;
-  font-size: 0.84rem;
-  color: #a89f99;
-  font-style: italic;
-}
-
-/* Seletor de Quests e Capítulos: Barras roláveis no mobile */
 .quest-nav,
 .chapter-nav {
   display: flex;
-  gap: 0.45rem;
+  gap: 0.35rem;
   overflow-x: auto;
-  padding-bottom: 0.35rem;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
 }
 
-.quest-nav {
-  margin-bottom: 0.45rem;
-}
-
-.chapter-nav {
-  margin-bottom: 0.9rem;
+.quest-nav::-webkit-scrollbar,
+.chapter-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .quest-pill,
@@ -171,14 +202,13 @@ h2 {
   background-color: #1f1c1a;
   border: 1px solid #4d4642;
   color: #a89f99;
-  min-height: 36px;
-  padding: 0.35rem 0.7rem;
+  min-height: 30px;
+  padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  scroll-snap-align: start;
 }
 
 .quest-pill.active,
@@ -186,7 +216,7 @@ h2 {
   border-color: #d4a359;
   color: #d4a359;
   font-weight: bold;
-  background-color: rgba(212, 163, 89, 0.12);
+  background-color: rgba(212, 163, 89, 0.14);
 }
 
 .quest-pill:disabled,
@@ -195,13 +225,126 @@ h2 {
   cursor: not-allowed;
 }
 
-/* HUD de Vida (HP) */
-.hp-hud {
+/* Barra de Ações Rápidas: 4 colunas sem scroll */
+.game-top-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+  flex-shrink: 0;
+}
+
+.action-pill {
+  width: 100%;
+  min-height: 38px;
+  padding: 0.35rem 0.4rem;
+  background-color: #1f1c1a;
+  border-color: #4d4642;
+  font-size: 0.78rem;
+}
+
+.badge-count {
+  background-color: #d4a359;
+  color: #1a1817;
+  padding: 0.05rem 0.35rem;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: bold;
+}
+
+/* Ocultar labels em telas estreitas ou alturas reduzidas para manter só ícones */
+@media (max-width: 420px), (max-height: 680px) {
+  .btn-label {
+    display: none;
+  }
+
+  .nav-btn {
+    min-width: 36px;
+    padding: 0.35rem 0.45rem;
+  }
+
+  .action-pill {
+    padding: 0.35rem 0.25rem;
+  }
+}
+
+/* Área de História e Decisões */
+.story-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-bottom: 0.6rem;
+}
+
+.image-wrapper {
+  flex-shrink: 0;
+}
+
+.image-wrapper img {
+  width: 100%;
+  max-height: clamp(80px, 16dvh, 175px);
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.55rem;
+  display: none;
+}
+
+.story-text {
+  font-size: clamp(0.9rem, 2.5vw, 1.05rem);
+  cursor: pointer;
+  color: #efe9dc;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  padding-right: 0.15rem;
+}
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.option-btn {
+  background-color: #332f2c;
+  color: #e8e2d5;
+  border: 1px solid #4d4642;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: clamp(0.84rem, 2.4vw, 0.95rem);
+  font-family: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1.3;
+}
+
+.option-btn:hover:not(:disabled),
+.option-btn:active:not(:disabled) {
+  background-color: #d4a359;
+  color: #1a1817;
+  border-color: #d4a359;
+  font-weight: bold;
+}
+
+.option-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background-color: #262321;
+}
+
+/* Barra de HP dentro de Personagem */
+.character-hp-hud {
   background-color: #1f1c1a;
   border: 1px solid #4d4642;
   border-radius: 8px;
   padding: 0.65rem 0.85rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
 .hp-hud-top {
@@ -231,88 +374,7 @@ h2 {
   background: linear-gradient(90deg, #b71c1c, #ef5350);
 }
 
-/* Ações Rápidas: Grade 2x2 no mobile */
-.game-top-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
-  margin-bottom: 1.1rem;
-}
-
-.action-pill {
-  width: 100%;
-  min-height: 44px;
-  text-align: center;
-  padding: 0.55rem 0.6rem;
-  background-color: #1f1c1a;
-  border-color: #4d4642;
-  font-size: 0.84rem;
-}
-
-.badge-count {
-  background-color: #d4a359;
-  color: #1a1817;
-  padding: 0.08rem 0.42rem;
-  border-radius: 10px;
-  font-size: 0.72rem;
-  font-weight: bold;
-  margin-left: 0.2rem;
-}
-
-/* Cena e Texto */
-.image-wrapper img {
-  width: 100%;
-  max-height: 220px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 1.1rem;
-  display: none;
-}
-
-.story-text {
-  font-size: clamp(1rem, 3.8vw, 1.15rem);
-  margin-bottom: 1.35rem;
-  cursor: pointer;
-  min-height: 4rem;
-  color: #efe9dc;
-}
-
-.options-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-.option-btn {
-  background-color: #332f2c;
-  color: #e8e2d5;
-  border: 1px solid #4d4642;
-  min-height: 48px;
-  padding: 0.8rem 1rem;
-  text-align: left;
-  font-size: clamp(0.92rem, 3.5vw, 1rem);
-  font-family: inherit;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  line-height: 1.4;
-}
-
-.option-btn:hover:not(:disabled),
-.option-btn:active:not(:disabled) {
-  background-color: #d4a359;
-  color: #1a1817;
-  border-color: #d4a359;
-  font-weight: bold;
-}
-
-.option-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  background-color: #262321;
-}
-
-/* Modais: Bottom Sheet no Mobile por padrão */
+/* Modais */
 .modal {
   position: fixed;
   inset: 0;
@@ -321,7 +383,6 @@ h2 {
   justify-content: center;
   align-items: flex-end;
   z-index: 100;
-  padding: 0;
 }
 
 .modal-content {
@@ -329,10 +390,9 @@ h2 {
   border: 1px solid #d4a359;
   border-bottom: none;
   width: 100%;
-  max-width: 100%;
-  max-height: 86dvh;
+  max-height: 88dvh;
   border-radius: 16px 16px 0 0;
-  padding: 1.15rem 1rem max(1.25rem, env(safe-area-inset-bottom));
+  padding: 1rem max(0.9rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(0.9rem, env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
 }
@@ -343,26 +403,26 @@ h2 {
   align-items: center;
   gap: 0.75rem;
   border-bottom: 1px solid #3d3835;
-  padding-bottom: 0.75rem;
-  margin-bottom: 0.9rem;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
 .modal-list-content {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  font-size: 0.92rem;
+  gap: 0.55rem;
+  font-size: 0.9rem;
   color: #b8afa6;
-  max-height: 62dvh;
-  padding-right: 0.2rem;
-  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  flex: 1;
 }
 
 /* Combate */
 .combat-turn-label {
   color: #a89f99;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .combat-hp-pill {
@@ -377,14 +437,15 @@ h2 {
 }
 
 .combat-bars {
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
 .combat-enemy-box {
   background-color: #1f1c1a;
   border: 1px solid #4d4642;
   border-radius: 8px;
-  padding: 0.7rem 0.85rem;
+  padding: 0.65rem 0.8rem;
 }
 
 .combat-bar-header {
@@ -392,8 +453,8 @@ h2 {
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.88rem;
-  margin-bottom: 0.4rem;
+  font-size: 0.86rem;
+  margin-bottom: 0.35rem;
   color: #e8e2d5;
 }
 
@@ -407,34 +468,104 @@ h2 {
   background-color: #1f1c1a;
   border-left: 3px solid #d4a359;
   border-radius: 6px;
-  padding: 0.75rem 0.85rem;
+  padding: 0.65rem 0.8rem;
   color: #e8e2d5;
-  font-size: 0.9rem;
-  margin-bottom: 0.9rem;
-  min-height: 3.2rem;
-  max-height: 24dvh;
+  font-size: 0.88rem;
+  margin-bottom: 0.75rem;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .combat-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.45rem;
+  flex-shrink: 0;
 }
 
 .combat-finish-btn,
 .dice-continue-btn {
   text-align: center;
-  margin-top: 0.85rem;
+  margin-top: 0.75rem;
+  flex-shrink: 0;
 }
 
-/* Diário */
+/* Diário Organizado por Quests */
+.journal-filter-bar {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  flex-shrink: 0;
+}
+
+.journal-filter-pill {
+  background-color: #1f1c1a;
+  border: 1px solid #4d4642;
+  color: #a89f99;
+  min-height: 34px;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.journal-filter-pill.active {
+  border-color: #d4a359;
+  color: #1a1817;
+  background-color: #d4a359;
+  font-weight: bold;
+}
+
+.journal-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.journal-quest-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.journal-quest-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid #3d3835;
+}
+
+.journal-quest-title {
+  font-size: 0.92rem;
+  color: #d4a359;
+}
+
+.journal-quest-count {
+  font-size: 0.74rem;
+  color: #a89f99;
+  white-space: nowrap;
+}
+
+.journal-quest-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
 .journal-entry {
   background-color: #1f1c1a;
-  padding: 0.75rem 0.85rem;
+  padding: 0.65rem 0.8rem;
   border-radius: 6px;
   border-left: 3px solid #d4a359;
-  line-height: 1.45;
+  line-height: 1.4;
+  color: #e8e2d5;
 }
 
 /* Mapa-Mundi */
@@ -442,10 +573,10 @@ h2 {
   background-color: #1f1c1a;
   border: 1px solid #4d4642;
   border-radius: 8px;
-  padding: 0.85rem 0.95rem;
+  padding: 0.75rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .location-card.is-current {
@@ -465,25 +596,25 @@ h2 {
 }
 
 .location-region {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: #a89f99;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .location-name {
-  font-size: 1rem;
+  font-size: 0.96rem;
   color: #d4a359;
 }
 
 .location-desc {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: #e8e2d5;
 }
 
 .loc-tag {
-  font-size: 0.72rem;
-  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  padding: 0.12rem 0.45rem;
   border-radius: 10px;
   font-weight: bold;
   white-space: nowrap;
@@ -507,22 +638,21 @@ h2 {
 }
 
 .loc-lock-reason {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #e57373;
 }
 
 .travel-btn {
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
   background-color: #332f2c;
   color: #e8e2d5;
   border: 1px solid #d4a359;
   border-radius: 6px;
-  min-height: 42px;
-  padding: 0.5rem 0.8rem;
+  min-height: 38px;
+  padding: 0.45rem 0.75rem;
   font-family: inherit;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .travel-btn:hover:not(:disabled),
@@ -546,21 +676,21 @@ h2 {
 
 .dice-info {
   color: #a89f99;
-  font-size: 0.88rem;
-  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
 }
 
 .dice-box {
-  width: 82px;
-  height: 82px;
-  margin: 1.15rem auto;
+  width: 74px;
+  height: 74px;
+  margin: 0.9rem auto;
   background: linear-gradient(135deg, #3b3531, #1f1c1a);
   border: 2px solid #d4a359;
   border-radius: 14px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: bold;
   color: #fff;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
@@ -571,30 +701,22 @@ h2 {
 }
 
 @keyframes shakeDice {
-  0% {
-    transform: rotate(-10deg) scale(1.05);
-  }
-
-  50% {
-    transform: rotate(10deg) scale(0.95);
-  }
-
-  100% {
-    transform: rotate(-10deg) scale(1.05);
-  }
+  0% { transform: rotate(-10deg) scale(1.05); }
+  50% { transform: rotate(10deg) scale(0.95); }
+  100% { transform: rotate(-10deg) scale(1.05); }
 }
 
 .dice-math {
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   color: #e8e2d5;
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.6rem;
 }
 
 .dice-result-banner {
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 6px;
   font-weight: bold;
-  font-size: 1rem;
+  font-size: 0.95rem;
   width: 100%;
 }
 
@@ -610,13 +732,13 @@ h2 {
   color: #e57373;
 }
 
-/* Progressão: Nível e XP */
+/* Progressão e Personagem */
 .progression-card {
   background-color: #1f1c1a;
   border: 1px solid #4d4642;
   border-radius: 8px;
-  padding: 0.75rem 0.9rem;
-  margin-bottom: 0.35rem;
+  padding: 0.7rem 0.85rem;
+  margin-bottom: 0.25rem;
 }
 
 .progression-top {
@@ -625,20 +747,20 @@ h2 {
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.4rem;
 }
 
 .level-pill {
   background-color: #d4a359;
   color: #1a1817;
   font-weight: bold;
-  font-size: 0.8rem;
-  padding: 0.18rem 0.55rem;
+  font-size: 0.78rem;
+  padding: 0.16rem 0.5rem;
   border-radius: 12px;
 }
 
 .xp-label {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #e8e2d5;
   font-weight: bold;
 }
@@ -658,13 +780,13 @@ h2 {
 }
 
 .pending-points-banner {
-  margin-top: 0.55rem;
-  font-size: 0.82rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
   color: #f0c27b;
   background-color: rgba(212, 163, 89, 0.12);
   border: 1px solid rgba(212, 163, 89, 0.35);
   border-radius: 6px;
-  padding: 0.35rem 0.6rem;
+  padding: 0.3rem 0.55rem;
 }
 
 .stat-row {
@@ -673,7 +795,7 @@ h2 {
   align-items: center;
   gap: 0.5rem;
   background-color: #1f1c1a;
-  padding: 0.65rem 0.85rem;
+  padding: 0.6rem 0.8rem;
   border-radius: 6px;
   border-left: 3px solid #d4a359;
   text-transform: capitalize;
@@ -683,7 +805,7 @@ h2 {
 .stat-value-group {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.5rem;
 }
 
 .stat-row span:last-child {
@@ -701,26 +823,17 @@ h2 {
   color: #1a1817;
   border: none;
   border-radius: 6px;
-  min-height: 36px;
-  min-width: 42px;
-  padding: 0.25rem 0.55rem;
+  min-height: 34px;
+  min-width: 40px;
+  padding: 0.2rem 0.5rem;
   font-weight: bold;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   cursor: pointer;
-}
-
-.stat-add-btn:hover:not(:disabled) {
-  background-color: #f0c27b;
-}
-
-.stat-add-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .inventory-item {
   background-color: #1f1c1a;
-  padding: 0.75rem 0.85rem;
+  padding: 0.7rem 0.8rem;
   border-radius: 6px;
   color: #d4a359;
   font-weight: bold;
@@ -728,20 +841,20 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
 }
 
 .inventory-item-info {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.12rem;
   min-width: 0;
 }
 
 .inventory-item-desc {
   color: #a89f99;
   font-weight: normal;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
 }
 
 .use-item-btn {
@@ -749,61 +862,27 @@ h2 {
   color: #1a1817;
   border: none;
   border-radius: 6px;
-  min-height: 38px;
-  padding: 0.35rem 0.7rem;
+  min-height: 36px;
+  padding: 0.3rem 0.65rem;
   font-weight: bold;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   cursor: pointer;
   white-space: nowrap;
 }
 
-.use-item-btn:hover {
-  background-color: #f0c27b;
-}
-
-/* Tablet / Desktop (>= 640px) */
+/* Desktop / Telas Amplas (>= 640px) */
 @media (min-width: 640px) {
   body {
-    align-items: center;
-    padding: 2rem 1rem;
+    padding: 1.25rem;
   }
 
   .book-container {
-    max-width: 650px;
-    padding: 2rem;
-    border-radius: 10px;
-  }
-
-  .screen-header {
-    align-items: center;
-    padding-bottom: 1rem;
-    margin-bottom: 1.4rem;
-  }
-
-  .quest-nav,
-  .chapter-nav {
-    flex-wrap: wrap;
-    overflow-x: visible;
-    padding-bottom: 0;
-  }
-
-  .chapter-nav {
-    margin-bottom: 1rem;
-  }
-
-  .game-top-actions {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.6rem;
-    margin-bottom: 1.25rem;
+    max-width: 680px;
+    padding: 1.25rem 1.5rem;
   }
 
   .image-wrapper img {
-    max-height: 300px;
-    margin-bottom: 1.4rem;
-  }
-
-  .story-text {
-    margin-bottom: 1.85rem;
+    max-height: 190px;
   }
 
   .modal {
@@ -812,97 +891,15 @@ h2 {
   }
 
   .modal-content {
-    max-width: 500px;
+    max-width: 520px;
     max-height: 82vh;
     border-bottom: 1px solid #d4a359;
     border-radius: 10px;
-    padding: 1.5rem;
+    padding: 1.35rem;
   }
 
   .map-modal-content,
   .combat-modal-content {
     max-width: 560px;
-  }
-
-  .modal-list-content {
-    max-height: 52vh;
-  }
-
-  /* Diário Organizado por Quests */
-  .journal-filter-bar {
-    display: flex;
-    gap: 0.45rem;
-    overflow-x: auto;
-    padding-bottom: 0.35rem;
-    margin-bottom: 0.25rem;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .journal-filter-pill {
-    background-color: #1f1c1a;
-    border: 1px solid #4d4642;
-    color: #a89f99;
-    min-height: 36px;
-    padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-family: inherit;
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .journal-filter-pill.active {
-    border-color: #d4a359;
-    color: #1a1817;
-    background-color: #d4a359;
-    font-weight: bold;
-  }
-
-  .journal-groups {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-  }
-
-  .journal-quest-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .journal-quest-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem;
-    padding-bottom: 0.35rem;
-    border-bottom: 1px solid #3d3835;
-  }
-
-  .journal-quest-title {
-    font-size: 0.94rem;
-    color: #d4a359;
-  }
-
-  .journal-quest-count {
-    font-size: 0.75rem;
-    color: #a89f99;
-    white-space: nowrap;
-  }
-
-  .journal-quest-entries {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .journal-entry {
-    background-color: #1f1c1a;
-    padding: 0.75rem 0.85rem;
-    border-radius: 6px;
-    border-left: 3px solid #d4a359;
-    line-height: 1.45;
-    color: #e8e2d5;
   }
 }

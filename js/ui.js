@@ -15,6 +15,7 @@ export class UIManager {
       chapterNav: document.getElementById('chapter-nav'),
       hpHudText: document.getElementById('hp-hud-text'),
       hpBarFill: document.getElementById('hp-bar-fill'),
+      charLevelBadge: document.getElementById('char-level-badge'),
       image: document.getElementById('story-image'),
       text: document.getElementById('story-text'),
       options: document.getElementById('options-container'),
@@ -81,16 +82,22 @@ export class UIManager {
     const maxHp = health?.maxHp ?? 50;
     const pct = maxHp > 0 ? Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100))) : 0;
 
-    this.elements.hpHudText.textContent = `${hp} / ${maxHp}`;
-    this.elements.hpBarFill.style.width = `${pct}%`;
-    this.elements.hpBarFill.classList.toggle('low-hp', pct <= 30);
+    if (this.elements.hpHudText) {
+      this.elements.hpHudText.textContent = `${hp} / ${maxHp}`;
+    }
+    if (this.elements.hpBarFill) {
+      this.elements.hpBarFill.style.width = `${pct}%`;
+      this.elements.hpBarFill.classList.toggle('low-hp', pct <= 30);
+    }
   }
 
   renderStatsButtonBadge(progression) {
     const level = progression?.level ?? 1;
     const pending = progression?.pendingStatPoints ?? 0;
-    const alertSuffix = pending > 0 ? ` ✨+${pending}` : '';
-    this.elements.statsBtn.innerHTML = `📊 Atributos <span class="badge-count">Nv.${level}${alertSuffix}</span>`;
+    const alertSuffix = pending > 0 ? ` +${pending}` : '';
+    if (this.elements.charLevelBadge) {
+      this.elements.charLevelBadge.textContent = `Nv.${level}${alertSuffix}`;
+    }
   }
 
   renderQuestNav(quests, currentIndex, unlockedIndex, onSelectQuest) {
@@ -100,7 +107,7 @@ export class UIManager {
       pill.className = `quest-pill ${idx === currentIndex ? 'active' : ''}`;
       const isLocked = idx > unlockedIndex;
       pill.disabled = isLocked;
-      pill.textContent = isLocked ? `🔒 Quest ${idx + 1}` : `⚔️ Quest ${idx + 1}`;
+      pill.textContent = isLocked ? `🔒 Q${idx + 1}` : `⚔️ Q${idx + 1}`;
       pill.title = quest.title;
 
       if (!isLocked) {
@@ -119,7 +126,7 @@ export class UIManager {
       pill.className = `chapter-pill ${idx === currentIndex ? 'active' : ''}`;
       const isLocked = idx > unlockedIndex;
       pill.disabled = isLocked;
-      pill.textContent = isLocked ? `🔒 Cap. ${idx + 1}` : `Cap. ${idx + 1}`;
+      pill.textContent = isLocked ? `🔒 C${idx + 1}` : `C${idx + 1}`;
       pill.title = chap.title;
 
       if (!isLocked) {
@@ -150,7 +157,7 @@ export class UIManager {
     this.elements.text.textContent = '';
     let index = 0;
     this.isTyping = true;
-    const speed = 18;
+    const speed = 14;
 
     const type = () => {
       if (index < text.length) {
@@ -192,16 +199,16 @@ export class UIManager {
       } else if (option.diceRoll) {
         const chance = engine.getSuccessChance(option.diceRoll.stat, option.diceRoll.dc);
         const statName = option.diceRoll.stat.toUpperCase();
-        label += ` [🎲 ${statName} | Chance: ${chance}%]`;
+        label += ` [🎲 ${statName} ${chance}%]`;
       }
 
       if (option.enemy) {
-        label += ` [⚔️ Combate: ${option.enemy.name}]`;
+        label += ` [⚔️ ${option.enemy.name}]`;
       }
 
       const lootHints = LootSystem.summarizeLootLabels(option);
       if (lootHints.length > 0) {
-        label += ` [🎁 Loot: ${lootHints.join(', ')}]`;
+        label += ` [🎁 ${lootHints.join(', ')}]`;
       }
 
       if (option.damage > 0) {
@@ -233,6 +240,8 @@ export class UIManager {
   }
 
   setAudioButtonText(enabled) {
-    this.elements.audioToggleBtn.textContent = enabled ? '🔊 Som: Ligado' : '🔇 Som: Desligado';
+    this.elements.audioToggleBtn.innerHTML = enabled
+      ? '<span class="btn-icon">🔊</span><span class="btn-label">Som: Ligado</span>'
+      : '<span class="btn-icon">🔇</span><span class="btn-label">Som: Desligado</span>';
   }
 }

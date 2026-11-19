@@ -10,54 +10,72 @@
 <body>
   <main class="book-container">
     <!-- TELA 1: BIBLIOTECA -->
-    <section id="library-screen">
+    <section id="library-screen" class="screen-view">
       <header class="screen-header">
         <h1>Elder Scrolls: Arena</h1>
-        <button id="audio-toggle-btn" class="nav-btn" title="Ativar/Desativar Sons">🔊 Som: Ligado</button>
+        <button id="audio-toggle-btn" class="nav-btn" aria-label="Som" title="Ativar/Desativar Sons">
+          <span class="btn-icon">🔊</span>
+          <span class="btn-label">Som: Ligado</span>
+        </button>
       </header>
       <p class="library-subtitle">Escolha sua campanha, Campeão Eterno:</p>
       <div id="books-list" class="books-list"></div>
     </section>
 
     <!-- TELA 2: LEITURA DO LIVRO -->
-    <section id="game-screen" class="hidden">
+    <section id="game-screen" class="screen-view hidden">
       <header class="screen-header game-header">
         <div class="header-main">
-          <button id="back-btn" class="nav-btn">← Livros</button>
-          <h1 id="book-title">Título</h1>
-          <span id="chapter-title" class="chapter-badge">Quest • Capítulo I</span>
+          <button id="back-btn" class="nav-btn" aria-label="Voltar aos livros" title="Voltar aos livros">
+            <span class="btn-icon">←</span>
+            <span class="btn-label">Livros</span>
+          </button>
+          <div class="header-titles">
+            <h1 id="book-title">Título</h1>
+            <span id="chapter-title" class="chapter-badge">Quest • Capítulo I</span>
+          </div>
         </div>
-        <button id="reset-btn" class="nav-btn">↺ Reiniciar</button>
+        <button id="reset-btn" class="nav-btn" aria-label="Reiniciar campanha" title="Reiniciar campanha">
+          <span class="btn-icon">↺</span>
+          <span class="btn-label">Reiniciar</span>
+        </button>
       </header>
 
       <!-- Seletor de Quests e Capítulos -->
-      <div id="quest-nav" class="quest-nav" aria-label="Navegação de quests"></div>
-      <div id="chapter-nav" class="chapter-nav" aria-label="Navegação de capítulos"></div>
-
-      <!-- HUD DE VIDA (HP) -->
-      <div class="hp-hud">
-        <div class="hp-hud-top">
-          <span>❤️ Vida (HP)</span>
-          <strong id="hp-hud-text">50 / 50</strong>
-        </div>
-        <div class="hp-bar-track">
-          <div id="hp-bar-fill" class="hp-bar-fill" style="width: 100%;"></div>
-        </div>
-      </div>
+      <nav class="nav-bars">
+        <div id="quest-nav" class="quest-nav" aria-label="Navegação de quests"></div>
+        <div id="chapter-nav" class="chapter-nav" aria-label="Navegação de capítulos"></div>
+      </nav>
 
       <!-- BOTÕES DE ACESSO RÁPIDO (MODAIS) -->
       <div class="game-top-actions">
-        <button id="map-btn" class="nav-btn action-pill">🗺️ Mapa</button>
-        <button id="stats-btn" class="nav-btn action-pill">📊 Atributos</button>
-        <button id="inventory-btn" class="nav-btn action-pill">🎒 Mochila <span id="inv-count" class="badge-count">0</span></button>
-        <button id="journal-btn" class="nav-btn action-pill">📜 Diário</button>
+        <button id="map-btn" class="nav-btn action-pill" aria-label="Mapa" title="Mapa">
+          <span class="btn-icon">🗺️</span>
+          <span class="btn-label">Mapa</span>
+        </button>
+        <button id="stats-btn" class="nav-btn action-pill" aria-label="Personagem" title="Personagem">
+          <span class="btn-icon">🧙</span>
+          <span class="btn-label">Personagem</span>
+          <span id="char-level-badge" class="badge-count">Nv.1</span>
+        </button>
+        <button id="inventory-btn" class="nav-btn action-pill" aria-label="Mochila" title="Mochila">
+          <span class="btn-icon">🎒</span>
+          <span class="btn-label">Mochila</span>
+          <span id="inv-count" class="badge-count">0</span>
+        </button>
+        <button id="journal-btn" class="nav-btn action-pill" aria-label="Diário" title="Diário">
+          <span class="btn-icon">📜</span>
+          <span class="btn-label">Diário</span>
+        </button>
       </div>
 
-      <div class="image-wrapper">
-        <img id="story-image" src="" alt="Cena da história">
+      <div class="story-stage">
+        <div class="image-wrapper">
+          <img id="story-image" src="" alt="Cena da história">
+        </div>
+        <p id="story-text" class="story-text" title="Clique para pular a digitação"></p>
       </div>
 
-      <p id="story-text" class="story-text" title="Clique para pular a digitação"></p>
       <div id="options-container" class="options-container"></div>
     </section>
 
@@ -105,24 +123,32 @@
       <div class="modal-content map-modal-content">
         <header class="modal-header">
           <h2>Mapa-Mundi de Tamriel</h2>
-          <button id="close-map-btn" class="nav-btn">✕</button>
+          <button id="close-map-btn" class="nav-btn" aria-label="Fechar mapa">✕</button>
         </header>
-        <div id="map-content" class="modal-list-content">
-          <!-- Preenchido via JS -->
-        </div>
+        <div id="map-content" class="modal-list-content"></div>
       </div>
     </div>
 
-    <!-- MODAL DE ATRIBUTOS -->
+    <!-- MODAL DE PERSONAGEM (HP + PROGRESSÃO + ATRIBUTOS) -->
     <div id="stats-modal" class="modal hidden">
       <div class="modal-content">
         <header class="modal-header">
-          <h2>Atributos do Campeão</h2>
-          <button id="close-stats-btn" class="nav-btn">✕</button>
+          <h2>Personagem</h2>
+          <button id="close-stats-btn" class="nav-btn" aria-label="Fechar personagem">✕</button>
         </header>
-        <div id="stats-content" class="modal-list-content">
-          <!-- Preenchido via JS -->
+
+        <!-- Barra de Vida (HP) centralizada em Personagem -->
+        <div class="hp-hud character-hp-hud">
+          <div class="hp-hud-top">
+            <span>❤️ Vida (HP)</span>
+            <strong id="hp-hud-text">50 / 50</strong>
+          </div>
+          <div class="hp-bar-track">
+            <div id="hp-bar-fill" class="hp-bar-fill" style="width: 100%;"></div>
+          </div>
         </div>
+
+        <div id="stats-content" class="modal-list-content"></div>
       </div>
     </div>
 
@@ -131,7 +157,7 @@
       <div class="modal-content">
         <header class="modal-header">
           <h2>Mochila</h2>
-          <button id="close-inventory-btn" class="nav-btn">✕</button>
+          <button id="close-inventory-btn" class="nav-btn" aria-label="Fechar mochila">✕</button>
         </header>
         <div id="inventory-content" class="modal-list-content">
           <p>A mochila está vazia.</p>
@@ -161,7 +187,7 @@
       <div class="modal-content">
         <header class="modal-header">
           <h2>Diário do Campeão</h2>
-          <button id="close-journal-btn" class="nav-btn">✕</button>
+          <button id="close-journal-btn" class="nav-btn" aria-label="Fechar diário">✕</button>
         </header>
         <div id="journal-content" class="modal-list-content">
           <p>Sua jornada ainda está no começo...</p>

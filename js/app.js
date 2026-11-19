@@ -40,8 +40,8 @@ function loadCurrentBlock() {
     }
   );
 
-  // Atualiza contadores dos modais em segundo plano
-  ui.renderInventoryModal(engine.state.inventory);
+  // Atualiza contador da mochila
+  ui.modals.renderInventory(engine.state.inventory);
 
   ui.renderBlockContent(block, () => {
     ui.renderOptions(block.options, engine.state.inventory, engine, handleOptionSelect, handleRestart);
@@ -51,16 +51,14 @@ function loadCurrentBlock() {
 function handleOptionSelect(option) {
   playSound('click');
 
-  if (option.gainStats) {
-    engine.applyStatGain(option.gainStats);
-  }
-
   if (option.nextChapter !== undefined) {
+    if (option.gainStats) engine.applyStatChanges(option.gainStats);
     engine.goToChapter(option.nextChapter);
     loadCurrentBlock();
   } else if (option.diceRoll) {
     executeDiceCheck(option);
   } else {
+    if (option.gainStats) engine.applyStatChanges(option.gainStats);
     engine.moveToBlock(option.nextBlock);
     loadCurrentBlock();
   }
@@ -68,43 +66,36 @@ function handleOptionSelect(option) {
 
 function executeDiceCheck(option) {
   const { stat, dc } = option.diceRoll;
-  const statVal = engine.state.stats[stat] || 50;
+  const statVal = engine.state.stats[stat] ?? 50;
 
-  ui.showDiceModal(stat, dc, statVal);
+  ui.modals.showDiceCheck(stat, dc, statVal);
 
   let ticks = 0;
   const maxTicks = 14;
 
   const rollInterval = setInterval(() => {
     const fakeRoll = Math.floor(Math.random() * 20) + 1;
-    ui.updateDiceAnimation(fakeRoll);
+    ui.modals.updateDiceRoll(fakeRoll);
     playSound('dice');
     ticks++;
 
     if (ticks >= maxTicks) {
       clearInterval(rollInterval);
-      const result = engine.rollDice(stat, dc);
+      const result = engine.performDiceCheck(stat, dc);
 
-      if (result.success) {
-        playSound('success');
-      } else {
-        playSound('fail');
-      }
+      playSound(result.success ? 'success' : 'fail');
 
-      ui.finalizeDiceAnimation(result, stat);
-
-      ui.elements.diceContinueBtn.onclick = () => {
+      ui.modals.finalizeDiceCheck(result, () => {
         playSound('click');
-        ui.hideDiceModal();
 
         if (result.success && option.gainStats) {
-          engine.applyStatGain(option.gainStats);
+          engine.applyStatChanges(option.gainStats);
         }
 
         const nextBlockId = result.success ? option.nextBlock : option.failBlock;
         engine.moveToBlock(nextBlockId);
         loadCurrentBlock();
-      };
+      });
     }
   }, 65);
 }
@@ -114,7 +105,7 @@ function handleRestart() {
   loadCurrentBlock();
 }
 
-// Eventos de Digitação e Áudio
+// Eventos de Digitação e Controles Gerais
 ui.elements.text.addEventListener('click', () => {
   if (ui.skipTypewriter()) {
     const block = engine.getCurrentBlock();
@@ -137,32 +128,32 @@ ui.elements.backBtn.addEventListener('click', () => {
   ui.showLibrary();
 });
 
-// Eventos dos Modais (Atributos, Mochila e Diário)
+// Eventos dos Modais
 ui.elements.statsBtn.addEventListener('click', () => {
   playSound('click');
-  ui.toggleModal('stats', true, engine.state.stats);
+  ui.modals.toggle('stats', true, engine.state.stats);
 });
 ui.elements.closeStatsBtn.addEventListener('click', () => {
   playSound('click');
-  ui.toggleModal('stats', false);
+  ui.modals.toggle('stats', false);
 });
 
 ui.elements.inventoryBtn.addEventListener('click', () => {
   playSound('click');
-  ui.toggleModal('inventory', true, engine.state.inventory);
+  ui.modals.toggle('inventory', true, engine.state.inventory);
 });
 ui.elements.closeInventoryBtn.addEventListener('click', () => {
   playSound('click');
-  ui.toggleModal('inventory', false);
+  ui.modals.toggle('inventory', false);
 });
 
 ui.elements.journalBtn.addEventListener('click', () => {
   playSound('click');
-  ui.toggleModal('journal', true, engine.state.history);
+  ui.modals.toggle('journal', true, engine.state.history);
 });
 ui.elements.closeJournalBtn.addEventListener('click', () => {
   playSound('click');
-  ui.toggleModal('journal', false);
+  ui.modals.toggle('journal', false);
 });
 
 // Inicialização

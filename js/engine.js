@@ -1,3 +1,5 @@
+import { DiceSystem } from './dice.js';
+
 const SAVE_PREFIX = 'livro_jogo_cap_save_';
 
 export class GameEngine {
@@ -5,7 +7,11 @@ export class GameEngine {
     this.allBooks = [];
     this.defaultStats = {};
     this.currentBook = null;
-    this.state = {
+    this.state = this.createEmptyState();
+  }
+
+  createEmptyState() {
+    return {
       chapterIndex: 0,
       unlockedChapter: 0,
       blockId: null,
@@ -15,13 +21,16 @@ export class GameEngine {
     };
   }
 
-  // Carrega tanto os livros quanto os atributos padrão do Stats.json
   async loadGameData() {
     try {
       const [booksRes, statsRes] = await Promise.all([
         fetch('./data/books.json'),
         fetch('./data/Stats.json')
       ]);
+
+      if (!booksRes.ok || !statsRes.ok) {
+        throw new Error('Falha ao carregar os arquivos JSON de dados.');
+      }
 
       this.allBooks = await booksRes.json();
       const statsData = await statsRes.json();
@@ -34,23 +43,33 @@ export class GameEngine {
     }
   }
 
+  buildInitialStats(book) {
+    return {
+      ...this.defaultStats,
+      ...(book?.initialStats || {})
+    };
+  }
+
   openBook(book) {
     this.currentBook = book;
     const savedData = localStorage.getItem(SAVE_PREFIX + book.id);
 
     if (savedData) {
       this.state = JSON.parse(savedData);
-    } else {
-      // Usa os atributos padrão vindos do Stats.json
-      this.state = {
-        chapterIndex: 0,
-        unlockedChapter: 0,
-        blockId: book.chapters[0].startBlock,
-        inventory: [],
-        stats: { ...this.defaultStats },
-        history: []
-      };
+      return this.state;
     }
+
+    this.state = {
+      chapterIndex: 0,
+      unlockedChapter: 0,
+      blockId: book.chapters[0].startBlock,
+      inventory: [],
+      stats: this.buildInitialStats(book),
+      history: []
+    };
+
+    // Processa o bloco inicial para registrar no diário e aplicar efeitos iniciais
+    this.moveToBlock(this.state.blockId);
     return this.state;
   }
 
@@ -76,8 +95,8 @@ export class GameEngine {
 
   moveToBlock(blockId) {
     const chapter = this.getCurrentChapter();
-    const block = chapter.blocks[blockId];
-    if (!block) return;
+    const block = chapter?.blocks[blockId];
+    if (!block) return null;
 
     this.state.blockId = blockId;
 
@@ -86,16 +105,11 @@ export class GameEngine {
     }
 
     if (block.gainStats) {
-      this.applyStatGain(block.gainStats);
+      this.applyStatChanges(block.gainStats, false);
     }
 
     if (block.modifyStats) {
-      if (!this.state.stats) this.state.stats = {};
-      for (const [stat, value] of Object.entries(block.modifyStats)) {
-        if (this.state.stats[stat] !== undefined) {
-          this.state.stats[stat] += value;
-        }
-      }
+      this.applyStatChanges(block.modifyStats, false);
     }
 
     const logEntry = `[${chapter.title}] ${block.content}`;
@@ -107,14 +121,16 @@ export class GameEngine {
     return block;
   }
 
-  applyStatGain(gainMap) {
-    if (!gainMap || !this.state.stats) return;
-    for (const [stat, value] of Object.entries(gainMap)) {
+  applyStatChanges(changesMap, shouldSave = true) {
+    if (!changesMap || !this.state.stats) return;
+    for (const [stat, value] of Object.entries(changesMap)) {
       if (this.state.stats[stat] !== undefined) {
-        this.state.stats[stat] += value;
+        this.state.stats[stat] = Math.max(0, Math.min(100, this.state.stats[stat] + value));
       }
     }
-    this.saveProgress();
+    if (shouldSave) {
+      this.saveProgress();
+    }
   }
 
   saveProgress() {
@@ -124,39 +140,28 @@ export class GameEngine {
   }
 
   restartGame() {
-    if (!this.currentBook) return;
+    if (!this.currentBook) return null;
     localStorage.removeItem(SAVE_PREFIX + this.currentBook.id);
+
     this.state = {
       chapterIndex: 0,
       unlockedChapter: 0,
       blockId: this.currentBook.chapters[0].startBlock,
       inventory: [],
-      stats: { ...this.defaultStats },
+      stats: this.buildInitialStats(this.currentBook),
       history: []
     };
+
     return this.moveToBlock(this.state.blockId);
   }
 
-  calculateSuccessChance(statValue, dc) {
-    // Como os atributos agora estão na faixa de 0 a 100, ajustamos a fórmula de cálculo de chance
-    const estimatedRoll = statValue + 10; // Média estimada (1d20 + modificador)
-    const diff = estimatedRoll - dc;
-    let chance = 50 + (diff * 5);
-    return Math.max(5, Math.min(95, Math.round(chance)));
+  getSuccessChance(stat, dc) {
+    const statVal = this.state.stats[stat] ?? 50;
+    return DiceSystem.calculateSuccessChance(statVal, dc);
   }
 
-  rollDice(stat, dc) {
-    const statVal = this.state.stats[stat] || 50;
-    // Modificador baseado no atributo (ex: a cada 10 pontos acima de 50, ganha +1 no dado)
-    const modifier = Math.floor((statVal - 50) / 5); 
-
-    const d20 = Math.floor(Math.random() * 20) + 1;
-    const total = d20 + modifier;
-
-    let isSuccess = total >= dc;
-    if (d20 === 20) isSuccess = true;
-    if (d20 === 1) isSuccess = false;
-
-    return { d20, statVal: modifier, total, success: isSuccess };
+  performDiceCheck(stat, dc) {
+    const statVal = this.state.stats[stat] ?? 50;
+    return DiceSystem.rollCheck(statVal, dc);
   }
 }

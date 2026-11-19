@@ -1,5 +1,9 @@
+import { ModalManager } from './modals.js';
+
 export class UIManager {
   constructor() {
+    this.modals = new ModalManager();
+
     this.elements = {
       libraryScreen: document.getElementById('library-screen'),
       gameScreen: document.getElementById('game-screen'),
@@ -13,31 +17,13 @@ export class UIManager {
       resetBtn: document.getElementById('reset-btn'),
       backBtn: document.getElementById('back-btn'),
       audioToggleBtn: document.getElementById('audio-toggle-btn'),
-      
-      // Botões e Modais de Menus Rápidos
+
       statsBtn: document.getElementById('stats-btn'),
-      statsModal: document.getElementById('stats-modal'),
       closeStatsBtn: document.getElementById('close-stats-btn'),
-      statsContent: document.getElementById('stats-content'),
-
       inventoryBtn: document.getElementById('inventory-btn'),
-      inventoryModal: document.getElementById('inventory-modal'),
       closeInventoryBtn: document.getElementById('close-inventory-btn'),
-      inventoryContent: document.getElementById('inventory-content'),
-      invCount: document.getElementById('inv-count'),
-
       journalBtn: document.getElementById('journal-btn'),
-      journalModal: document.getElementById('journal-modal'),
-      closeJournalBtn: document.getElementById('close-journal-btn'),
-      journalContent: document.getElementById('journal-content'),
-      
-      diceModal: document.getElementById('dice-modal'),
-      diceCheckTitle: document.getElementById('dice-check-title'),
-      diceDcInfo: document.getElementById('dice-dc-info'),
-      diceBox: document.getElementById('dice-box'),
-      diceMath: document.getElementById('dice-math'),
-      diceResultBanner: document.getElementById('dice-result-banner'),
-      diceContinueBtn: document.getElementById('dice-continue-btn')
+      closeJournalBtn: document.getElementById('close-journal-btn')
     };
 
     this.typingTimeout = null;
@@ -64,7 +50,7 @@ export class UIManager {
       card.innerHTML = `
         <h2>${book.title}</h2>
         <p>${book.description || ''}</p>
-        <small style="color: #d4a359; display: block; margin-top: 0.5rem;">${totalChapters} Capítulos</small>
+        <small class="book-chapters-count">${totalChapters} Capítulos</small>
       `;
       card.addEventListener('click', () => onSelectBook(book));
       this.elements.booksList.appendChild(card);
@@ -93,27 +79,6 @@ export class UIManager {
       }
       this.elements.chapterNav.appendChild(pill);
     });
-  }
-
-  renderStatsModal(stats) {
-    if (!stats || Object.keys(stats).length === 0) {
-      this.elements.statsContent.innerHTML = '<p>Nenhum atributo registrado.</p>';
-      return;
-    }
-    this.elements.statsContent.innerHTML = Object.keys(stats)
-      .map(stat => `<div class="stat-row"><span>${stat}</span><span>${stats[stat]}</span></div>`)
-      .join('');
-  }
-
-  renderInventoryModal(inventory) {
-    this.elements.invCount.textContent = inventory.length;
-    if (!inventory || inventory.length === 0) {
-      this.elements.inventoryContent.innerHTML = '<p>A mochila está vazia.</p>';
-      return;
-    }
-    this.elements.inventoryContent.innerHTML = inventory
-      .map(item => `<div class="inventory-item">🎒 ${item}</div>`)
-      .join('');
   }
 
   renderBlockContent(block, onCompleteTyping) {
@@ -175,8 +140,7 @@ export class UIManager {
       if (option.requiredItem && !hasItem) {
         label += ` [Requer: ${option.requiredItem}]`;
       } else if (option.diceRoll) {
-        const statVal = engine.state.stats[option.diceRoll.stat] || 50;
-        const chance = engine.calculateSuccessChance(statVal, option.diceRoll.dc);
+        const chance = engine.getSuccessChance(option.diceRoll.stat, option.diceRoll.dc);
         const statName = option.diceRoll.stat.toUpperCase();
         label += ` [🎲 ${statName} | Chance: ${chance}%]`;
       }
@@ -194,76 +158,6 @@ export class UIManager {
       btn.addEventListener('click', onClick);
     }
     this.elements.options.appendChild(btn);
-  }
-
-  showDiceModal(stat, dc, statVal) {
-    this.elements.diceCheckTitle.textContent = `Teste de ${stat.charAt(0).toUpperCase() + stat.slice(1)}`;
-    this.elements.diceDcInfo.textContent = `Dificuldade (CD): ${dc} | Atributo: ${statVal}`;
-    this.elements.diceBox.classList.add('dice-rolling');
-    this.elements.diceMath.textContent = 'Rolando 1d20...';
-    this.elements.diceResultBanner.className = 'dice-result-banner hidden';
-    this.elements.diceContinueBtn.classList.add('hidden');
-    this.elements.diceModal.classList.remove('hidden');
-  }
-
-  updateDiceAnimation(fakeRoll) {
-    this.elements.diceBox.textContent = fakeRoll;
-  }
-
-  finalizeDiceAnimation(result, stat) {
-    this.elements.diceBox.classList.remove('dice-rolling');
-    this.elements.diceBox.textContent = result.d20;
-
-    let note = '';
-    if (result.d20 === 20) note = ' (Acerto Crítico!)';
-    if (result.d20 === 1) note = ' (Falha Crítica!)';
-
-    this.elements.diceMath.textContent = `Dado (${result.d20}) + Modif = ${result.total}${note}`;
-    this.elements.diceResultBanner.classList.remove('hidden');
-
-    if (result.success) {
-      this.elements.diceResultBanner.textContent = 'SUCESSO NA AÇÃO!';
-      this.elements.diceResultBanner.className = 'dice-result-banner dice-success';
-    } else {
-      this.elements.diceResultBanner.textContent = 'FALHA NA AÇÃO!';
-      this.elements.diceResultBanner.className = 'dice-result-banner dice-fail';
-    }
-    this.elements.diceContinueBtn.classList.remove('hidden');
-  }
-
-  hideDiceModal() {
-    this.elements.diceModal.classList.add('hidden');
-  }
-
-  toggleModal(modalName, show, data = []) {
-    if (modalName === 'stats') {
-      if (show) {
-        this.renderStatsModal(data);
-        this.elements.statsModal.classList.remove('hidden');
-      } else {
-        this.elements.statsModal.classList.add('hidden');
-      }
-    } else if (modalName === 'inventory') {
-      if (show) {
-        this.renderInventoryModal(data);
-        this.elements.inventoryModal.classList.remove('hidden');
-      } else {
-        this.elements.inventoryModal.classList.add('hidden');
-      }
-    } else if (modalName === 'journal') {
-      if (show) {
-        if (data.length === 0) {
-          this.elements.journalContent.innerHTML = '<p>Nenhum registro no diário ainda.</p>';
-        } else {
-          this.elements.journalContent.innerHTML = data
-            .map((text, idx) => `<div class="journal-entry"><strong>#${idx + 1}</strong><br>${text}</div>`)
-            .join('');
-        }
-        this.elements.journalModal.classList.remove('hidden');
-      } else {
-        this.elements.journalModal.classList.add('hidden');
-      }
-    }
   }
 
   setAudioButtonText(enabled) {

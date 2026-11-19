@@ -71,6 +71,12 @@ h1 {
   font-size: 0.95rem;
 }
 
+.book-chapters-count {
+  color: #d4a359;
+  display: block;
+  margin-top: 0.5rem;
+}
+
 .nav-btn {
   background: transparent;
   border: 1px solid #5c544f;
@@ -88,49 +94,6 @@ h1 {
 
 #back-btn {
   margin-bottom: 0.5rem;
-}
-
-.stats-bar {
-  background-color: #1f1c1a;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  margin-bottom: 0.8rem;
-  display: flex;
-  gap: 1.2rem;
-  font-size: 0.9rem;
-  color: #d4a359;
-  font-weight: bold;
-}
-
-.stat-item {
-  text-transform: capitalize;
-}
-
-.inventory-bar {
-  background-color: #1f1c1a;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.9rem;
-  color: #a89f99;
-}
-
-.inventory-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.item-badge {
-  background-color: #d4a359;
-  color: #1a1817;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 0.8rem;
 }
 
 .image-wrapper img {
@@ -187,20 +150,7 @@ h1 {
   font-size: 0.95rem;
 }
 
-.game-header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.game-header-actions .inventory-bar {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-/* Estilos do Modal do Diário */
+/* Modais */
 .modal {
   position: fixed;
   top: 0;
@@ -233,17 +183,6 @@ h1 {
   border-bottom: 1px solid #3d3835;
   padding-bottom: 0.8rem;
   margin-bottom: 1rem;
-}
-
-.journal-content {
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  font-size: 0.95rem;
-  color: #b8afa6;
-  max-height: 50vh;
-  padding-right: 0.5rem;
 }
 
 .journal-entry {
@@ -378,7 +317,6 @@ h1 {
   margin-left: 0.3rem;
 }
 
-/* Padronização do conteúdo interno dos modais */
 .modal-list-content {
   overflow-y: auto;
   display: flex;
@@ -404,6 +342,11 @@ h1 {
 .stat-row span:last-child {
   font-weight: bold;
   color: #d4a359;
+}
+
+.stat-mod {
+  color: #a89f99;
+  font-weight: normal;
 }
 
 .inventory-item {

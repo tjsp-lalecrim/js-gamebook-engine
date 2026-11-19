@@ -1,3 +1,4 @@
+import { CombatSystem } from './combat.js';
 import { DiceSystem } from './dice.js';
 import { ProgressionSystem } from './progression.js';
 import { WorldMapSystem } from './world.js';
@@ -10,9 +11,12 @@ export class GameEngine {
     this.defaultStats = {};
     this.currentBook = null;
     this.state = this.createEmptyState();
+    this.activeCombat = null;
   }
 
   createEmptyState() {
+    const initialStats = {};
+    const initialProgression = ProgressionSystem.createInitialProgression();
     return {
       chapterIndex: 0,
       unlockedChapter: 0,
@@ -20,8 +24,9 @@ export class GameEngine {
       visitedLocations: [],
       blockId: null,
       inventory: [],
-      stats: {},
-      progression: ProgressionSystem.createInitialProgression(),
+      stats: initialStats,
+      health: CombatSystem.createInitialHealth(initialStats, initialProgression.level),
+      progression: initialProgression,
       history: []
     };
   }
@@ -34,12 +39,18 @@ export class GameEngine {
     };
     mergedProgression.xpToNextLevel = ProgressionSystem.getXpForNextLevel(mergedProgression.level);
 
+    const stats = savedState?.stats || {};
+    const health = savedState?.health
+      ? CombatSystem.syncMaxHp(savedState.health, stats, mergedProgression.level)
+      : CombatSystem.createInitialHealth(stats, mergedProgression.level);
+
     const normalized = {
       ...base,
       ...savedState,
       visitedLocations: Array.isArray(savedState?.visitedLocations) ? savedState.visitedLocations : [],
       inventory: Array.isArray(savedState?.inventory) ? savedState.inventory : [],
-      stats: savedState?.stats || {},
+      stats,
+      health,
       progression: mergedProgression,
       history: Array.isArray(savedState?.history) ? savedState.history : []
     };
@@ -86,6 +97,7 @@ export class GameEngine {
 
   openBook(book) {
     this.currentBook = book;
+    this.activeCombat = null;
     const savedData = localStorage.getItem(SAVE_PREFIX + book.id);
 
     if (savedData) {
@@ -94,6 +106,8 @@ export class GameEngine {
     }
 
     const startLoc = WorldMapSystem.getBookLocations(book)[0] || null;
+    const initialStats = this.buildInitialStats(book);
+    const initialProgression = ProgressionSystem.createInitialProgression();
 
     this.state = {
       chapterIndex: 0,
@@ -102,8 +116,9 @@ export class GameEngine {
       visitedLocations: startLoc ? [startLoc.id] : [],
       blockId: startLoc?.blockId || book.chapters[0].startBlock,
       inventory: [],
-      stats: this.buildInitialStats(book),
-      progression: ProgressionSystem.createInitialProgression(),
+      stats: initialStats,
+      health: CombatSystem.createInitialHealth(initialStats, initialProgression.level),
+      progression: initialProgression,
       history: []
     };
 
@@ -188,6 +203,65 @@ export class GameEngine {
     }
   }
 
+  syncHealth(healAmountOnLevelUp = 0, shouldSave = false) {
+    const base = CombatSystem.syncMaxHp(
+      this.state.health,
+      this.state.stats,
+      this.state.progression?.level ?? 1
+    );
+    const boostedHp = Math.min(base.maxHp, base.hp + healAmountOnLevelUp);
+    this.state.health = {
+      hp: boostedHp,
+      maxHp: base.maxHp
+    };
+    if (shouldSave) {
+      this.saveProgress();
+    }
+    return this.state.health;
+  }
+
+  applyHpChange(delta, reason = '', shouldSave = true) {
+    const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
+    const res = CombatSystem.modifyHp(
+      this.state.health,
+      delta,
+      this.state.stats,
+      this.state.progression?.level ?? 1
+    );
+    this.state.health = { hp: res.hp, maxHp: res.maxHp };
+
+    if (res.actualChange < 0) {
+      const lost = Math.abs(res.actualChange);
+      const suffix = reason ? ` (${reason})` : '';
+      this.recordLog(chapterTitle, `Você sofreu ${lost} de dano${suffix}. HP: ${res.hp}/${res.maxHp}.`);
+    } else if (res.actualChange > 0) {
+      const suffix = reason ? ` (${reason})` : '';
+      this.recordLog(chapterTitle, `Você recuperou ${res.actualChange} de HP${suffix}. HP: ${res.hp}/${res.maxHp}.`);
+    }
+
+    if (shouldSave) {
+      this.saveProgress();
+    }
+
+    return res;
+  }
+
+  restoreFullHealth(reason = 'Descanso', shouldSave = true) {
+    const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
+    this.state.health = CombatSystem.healFull(
+      this.state.stats,
+      this.state.progression?.level ?? 1
+    );
+    this.recordLog(
+      chapterTitle,
+      `Vida totalmente restaurada (${reason}). HP: ${this.state.health.hp}/${this.state.health.maxHp}.`
+    );
+    if (shouldSave) {
+      this.saveProgress();
+    }
+    return this.state.health;
+  }
+
   gainExperience(amount, shouldSave = true) {
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
     const result = ProgressionSystem.grantXp(this.state.progression, this.state.stats, amount);
@@ -197,9 +271,10 @@ export class GameEngine {
     }
 
     if (result.leveledUpCount > 0) {
+      this.syncHealth(result.leveledUpCount * 10, false);
       this.recordLog(
         chapterTitle,
-        `Subiu para o Nível ${result.newLevel}! (+${result.pointsAwarded} pontos de atributo disponíveis)`
+        `Subiu para o Nível ${result.newLevel}! (+${result.pointsAwarded} pontos de atributo e +${result.leveledUpCount * 10} de vitalidade)`
       );
     }
 
@@ -218,9 +293,27 @@ export class GameEngine {
       step
     );
     if (allocated) {
+      this.syncHealth(0, false);
       this.saveProgress();
     }
     return allocated;
+  }
+
+  startCombat(enemyConfig, fallbackBlockId = null) {
+    const enemy = CombatSystem.createEnemyState(enemyConfig);
+    this.activeCombat = {
+      enemy,
+      turn: 1,
+      fallbackBlockId: enemy.fleeBlock || fallbackBlockId || this.state.blockId,
+      lastLog: `${enemy.name} entrou em combate!`
+    };
+    const chapterTitle = this.getCurrentChapter()?.title || 'Combate';
+    this.recordLog(chapterTitle, `Combate iniciado contra ${enemy.name} (HP: ${enemy.hp}/${enemy.maxHp}).`);
+    return this.activeCombat;
+  }
+
+  clearCombat() {
+    this.activeCombat = null;
   }
 
   moveToBlock(blockId) {
@@ -229,6 +322,7 @@ export class GameEngine {
     if (!block) return null;
 
     this.state.blockId = blockId;
+    this.syncHealth(0, false);
 
     const matchingLoc = this.getLocations().find(
       (loc) => loc.chapterIndex === this.state.chapterIndex && loc.blockId === blockId
@@ -252,11 +346,24 @@ export class GameEngine {
       this.applyStatChanges(block.modifyStats, false);
     }
 
+    if (block.fullHeal) {
+      this.restoreFullHealth('Bênção / Descanso', false);
+    }
+
+    const hpDelta = (block.heal ?? block.restoreHp ?? 0) - (block.damage ?? 0);
+    if (hpDelta !== 0) {
+      this.applyHpChange(hpDelta, '', false);
+    }
+
     this.recordLog(chapter.title, block.content);
 
     const blockXp = block.giveXp ?? block.xp ?? 0;
     if (blockXp > 0) {
       this.gainExperience(blockXp, false);
+    }
+
+    if (block.enemy && this.state.health.hp > 0) {
+      this.startCombat(block.enemy, blockId);
     }
 
     this.saveProgress();
@@ -270,6 +377,7 @@ export class GameEngine {
         this.state.stats[stat] = Math.max(0, Math.min(100, this.state.stats[stat] + value));
       }
     }
+    this.syncHealth(0, false);
     if (shouldSave) {
       this.saveProgress();
     }
@@ -283,9 +391,12 @@ export class GameEngine {
 
   restartGame() {
     if (!this.currentBook) return null;
+    this.activeCombat = null;
     localStorage.removeItem(SAVE_PREFIX + this.currentBook.id);
 
     const startLoc = this.getLocations()[0] || null;
+    const initialStats = this.buildInitialStats(this.currentBook);
+    const initialProgression = ProgressionSystem.createInitialProgression();
 
     this.state = {
       chapterIndex: 0,
@@ -294,8 +405,9 @@ export class GameEngine {
       visitedLocations: startLoc ? [startLoc.id] : [],
       blockId: startLoc?.blockId || this.currentBook.chapters[0].startBlock,
       inventory: [],
-      stats: this.buildInitialStats(this.currentBook),
-      progression: ProgressionSystem.createInitialProgression(),
+      stats: initialStats,
+      health: CombatSystem.createInitialHealth(initialStats, initialProgression.level),
+      progression: initialProgression,
       history: []
     };
 

@@ -50,6 +50,7 @@
               {
                 "text": "Arrombar a fechadura enferrujada da cela",
                 "diceRoll": { "stat": "forca", "dc": 12 },
+                "failDamage": 6,
                 "gainXp": 35,
                 "nextBlock": "corredor_guarda",
                 "failBlock": "falha_grade"
@@ -76,6 +77,7 @@
             "image": "https://picsum.photos/seed/tunnel/650/300",
             "content": "Você encontra um alçapão antigo que leva diretamente aos esgotos reais, evitando os guardas e encontrando uma adaga abandonada.",
             "giveItem": "Adaga Imperial",
+            "heal": 10,
             "giveXp": 45,
             "options": [
               { "text": "Seguir para o Portal de Saída", "nextBlock": "portal_cap1" }
@@ -83,19 +85,27 @@
           },
           "corredor_guarda": {
             "image": "https://picsum.photos/seed/guard/650/300",
-            "content": "Um guarda corrompido por Tharn bloqueia a ponte sobre o fosso subterrâneo.",
+            "content": "Um Guarda Corrompido por Tharn bloqueia a ponte sobre o fosso subterrâneo, brandindo uma alabarda.",
+            "enemy": {
+              "id": "guarda-corrompido",
+              "name": "Guarda Corrompido",
+              "hp": 26,
+              "attackStat": "forca",
+              "attackBonus": 2,
+              "dc": 11,
+              "damageMin": 5,
+              "damageMax": 9,
+              "xpReward": 55,
+              "defeatBlock": "portal_cap1",
+              "fleeBlock": "ferido_guarda",
+              "defeatText": "O guarda tomba e abre caminho para a câmara seguinte!"
+            },
             "options": [
-              {
-                "text": "Atacar o guarda em combate direto",
-                "diceRoll": { "stat": "forca", "dc": 13 },
-                "gainXp": 50,
-                "nextBlock": "portal_cap1",
-                "failBlock": "ferido_guarda"
-              },
               {
                 "text": "Esgueirar-se pelas sombras da parede",
                 "diceRoll": { "stat": "agilidade", "dc": 11 },
-                "gainXp": 50,
+                "failDamage": 8,
+                "gainXp": 45,
                 "nextBlock": "portal_cap1",
                 "failBlock": "ferido_guarda"
               }
@@ -103,8 +113,9 @@
           },
           "ferido_guarda": {
             "image": "https://picsum.photos/seed/blood/650/300",
-            "content": "Você recebe um corte no braço durante a fuga, mas consegue empurrar o guarda no fosso e alcançar a câmara seguinte.",
+            "content": "Você recebe um golpe durante a fuga, mas consegue empurrar o perseguidor e alcançar a câmara seguinte.",
             "modifyStats": { "forca": -5 },
+            "damage": 8,
             "giveXp": 25,
             "options": [
               { "text": "Entrar na Câmara do Portal", "nextBlock": "portal_cap1" }
@@ -113,6 +124,7 @@
           "portal_cap1": {
             "image": "https://picsum.photos/seed/portal/650/300",
             "content": "Ria Silmane abre um portal dimensional que leva às províncias externas de Tamriel. Você sobreviveu às masmorras!",
+            "heal": 15,
             "giveXp": 60,
             "options": [
               { "text": "Avançar para o Capítulo II →", "nextChapter": 1 },
@@ -148,6 +160,7 @@
           "emboscada_gelo": {
             "image": "https://picsum.photos/seed/ice/650/300",
             "content": "As runas ativam uma armadilha de gelo! Você precisa saltar antes que o teto desabe.",
+            "damage": 10,
             "options": [
               {
                 "text": "Saltar para dentro do salão principal",
@@ -162,6 +175,7 @@
             "image": "https://picsum.photos/seed/staff/650/300",
             "content": "Sobre o altar de cristal repousa o Primeiro Fragmento do Cajado do Caos! O poder arcano pulsa em suas mãos.",
             "giveItem": "Fragmento do Cajado (1/8)",
+            "fullHeal": true,
             "giveXp": 80,
             "options": [
               { "text": "Avançar para o Capítulo III →", "nextChapter": 2 },
@@ -183,18 +197,25 @@
           "palacio_portoes": {
             "image": "https://picsum.photos/seed/palace/650/300",
             "content": "Com o Cajado do Caos reforjado em mãos, você retorna ao Palácio Imperial. Jagar Tharn aguarda no Salão do Trono.",
+            "enemy": {
+              "id": "jagar-tharn-ilusao",
+              "name": "Jagar Tharn (Ilusão Arcana)",
+              "hp": 42,
+              "attackStat": "inteligencia",
+              "attackBonus": 4,
+              "dc": 13,
+              "damageMin": 7,
+              "damageMax": 13,
+              "xpReward": 110,
+              "defeatBlock": "vitoria_final",
+              "fleeBlock": "palacio_portoes",
+              "defeatText": "A ilusão de Jagar Tharn se estilhaça sob o poder arcano!"
+            },
             "options": [
               {
-                "text": "Canalizar o poder do Fragmento contra Jagar Tharn",
+                "text": "Canalizar o poder do Fragmento para encerrar a ilusão",
                 "requiredItem": "Fragmento do Cajado (1/8)",
                 "diceRoll": { "stat": "inteligencia", "dc": 12 },
-                "gainXp": 100,
-                "nextBlock": "vitoria_final",
-                "failBlock": "derrota_tharn"
-              },
-              {
-                "text": "Avançar com força física contra o mago",
-                "diceRoll": { "stat": "forca", "dc": 15 },
                 "gainXp": 100,
                 "nextBlock": "vitoria_final",
                 "failBlock": "derrota_tharn"
@@ -210,6 +231,7 @@
           "derrota_tharn": {
             "image": "https://picsum.photos/seed/fire/650/300",
             "content": "Um raio arcano de Tharn atinge seu peito antes que você possa reagir. O Império cai nas trevas.",
+            "damage": 999,
             "options": []
           }
         }

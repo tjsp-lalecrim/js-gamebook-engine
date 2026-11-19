@@ -32,6 +32,17 @@
       <!-- Seletor de Capítulos -->
       <div id="chapter-nav" class="chapter-nav"></div>
 
+      <!-- HUD DE VIDA (HP) -->
+      <div class="hp-hud">
+        <div class="hp-hud-top">
+          <span>❤️ Vida (HP)</span>
+          <strong id="hp-hud-text">50 / 50</strong>
+        </div>
+        <div class="hp-bar-track">
+          <div id="hp-bar-fill" class="hp-bar-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
       <!-- BOTÕES DE ACESSO RÁPIDO (MODAIS) -->
       <div class="game-top-actions">
         <button id="map-btn" class="nav-btn action-pill">🗺️ Mapa</button>
@@ -47,6 +58,45 @@
       <p id="story-text" class="story-text" title="Clique para pular a digitação"></p>
       <div id="options-container" class="options-container"></div>
     </section>
+
+    <!-- MODAL DE COMBATE (RPG) -->
+    <div id="combat-modal" class="modal hidden">
+      <div class="modal-content combat-modal-content">
+        <header class="modal-header">
+          <div>
+            <h2 id="combat-enemy-name">Inimigo</h2>
+            <small id="combat-turn-label" class="combat-turn-label">Turno 1</small>
+          </div>
+          <span id="combat-player-hp-pill" class="combat-hp-pill">HP: 50/50</span>
+        </header>
+
+        <div class="combat-bars">
+          <div class="combat-enemy-box">
+            <div class="combat-bar-header">
+              <span>⚔️ <strong id="combat-enemy-label">Adversário</strong></span>
+              <span id="combat-enemy-hp-text">30 / 30 HP</span>
+            </div>
+            <div class="hp-bar-track">
+              <div id="combat-enemy-hp-fill" class="enemy-hp-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="combat-log-box" class="combat-log-box">
+          O combate começou!
+        </div>
+
+        <div id="combat-actions" class="combat-actions">
+          <button id="combat-attack-btn" class="option-btn">⚔️ Atacar Inimigo</button>
+          <button id="combat-dodge-btn" class="option-btn">🛡️ Esquivar (Agilidade)</button>
+          <button id="combat-flee-btn" class="option-btn">🏃 Fugir (Velocidade)</button>
+        </div>
+
+        <button id="combat-finish-btn" class="option-btn hidden" style="text-align: center; margin-top: 0.8rem;">
+          Prosseguir →
+        </button>
+      </div>
+    </div>
 
     <!-- MODAL DO MAPA-MUNDI -->
     <div id="map-modal" class="modal hidden">

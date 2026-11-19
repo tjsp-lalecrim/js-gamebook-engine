@@ -4,6 +4,20 @@ import { WorldMapSystem } from './world.js';
 export class ModalManager {
   constructor() {
     this.elements = {
+      combatModal: document.getElementById('combat-modal'),
+      combatEnemyName: document.getElementById('combat-enemy-name'),
+      combatTurnLabel: document.getElementById('combat-turn-label'),
+      combatPlayerHpPill: document.getElementById('combat-player-hp-pill'),
+      combatEnemyLabel: document.getElementById('combat-enemy-label'),
+      combatEnemyHpText: document.getElementById('combat-enemy-hp-text'),
+      combatEnemyHpFill: document.getElementById('combat-enemy-hp-fill'),
+      combatLogBox: document.getElementById('combat-log-box'),
+      combatActions: document.getElementById('combat-actions'),
+      combatAttackBtn: document.getElementById('combat-attack-btn'),
+      combatDodgeBtn: document.getElementById('combat-dodge-btn'),
+      combatFleeBtn: document.getElementById('combat-flee-btn'),
+      combatFinishBtn: document.getElementById('combat-finish-btn'),
+
       mapModal: document.getElementById('map-modal'),
       mapContent: document.getElementById('map-content'),
 
@@ -29,6 +43,47 @@ export class ModalManager {
 
   formatModifier(mod) {
     return mod >= 0 ? `+${mod}` : `${mod}`;
+  }
+
+  openCombatModal(combatState, playerHealth, callbacks = {}) {
+    this.updateCombatState(combatState, playerHealth, { isFinished: false });
+
+    this.elements.combatAttackBtn.onclick = () => callbacks.onAttack?.();
+    this.elements.combatDodgeBtn.onclick = () => callbacks.onDodge?.();
+    this.elements.combatFleeBtn.onclick = () => callbacks.onFlee?.();
+    this.elements.combatFinishBtn.onclick = () => {
+      this.hideCombatModal();
+      callbacks.onFinish?.();
+    };
+
+    this.elements.combatModal.classList.remove('hidden');
+  }
+
+  updateCombatState(combatState, playerHealth, options = {}) {
+    if (!combatState?.enemy) return;
+    const { enemy, turn = 1, lastLog = '' } = combatState;
+    const hp = playerHealth?.hp ?? 50;
+    const maxHp = playerHealth?.maxHp ?? 50;
+    const enemyPct = Math.max(0, Math.min(100, Math.round((enemy.hp / enemy.maxHp) * 100)));
+
+    this.elements.combatEnemyName.textContent = `Combate: ${enemy.name}`;
+    this.elements.combatTurnLabel.textContent = `Turno ${turn} • CD ${enemy.dc}`;
+    this.elements.combatPlayerHpPill.textContent = `Seu HP: ${hp}/${maxHp}`;
+    this.elements.combatEnemyLabel.textContent = enemy.name;
+    this.elements.combatEnemyHpText.textContent = `${enemy.hp} / ${enemy.maxHp} HP`;
+    this.elements.combatEnemyHpFill.style.width = `${enemyPct}%`;
+    this.elements.combatLogBox.textContent = lastLog;
+
+    const isFinished = Boolean(options.isFinished);
+    this.elements.combatActions.classList.toggle('hidden', isFinished);
+    this.elements.combatFinishBtn.classList.toggle('hidden', !isFinished);
+    if (isFinished && options.finishLabel) {
+      this.elements.combatFinishBtn.textContent = options.finishLabel;
+    }
+  }
+
+  hideCombatModal() {
+    this.elements.combatModal.classList.add('hidden');
   }
 
   renderWorldMap(payload, onTravel = null) {
@@ -96,13 +151,14 @@ export class ModalManager {
     }
   }
 
-  renderProgressionHeader(progression) {
+  renderProgressionHeader(progression, health = null) {
     const level = progression?.level ?? 1;
     const xp = progression?.xp ?? 0;
     const xpToNext = progression?.xpToNextLevel ?? 100;
     const pending = progression?.pendingStatPoints ?? 0;
     const pct = Math.max(0, Math.min(100, Math.round((xp / xpToNext) * 100)));
 
+    const hpText = health ? ` • ❤️ HP: ${health.hp}/${health.maxHp}` : '';
     const pendingBadge = pending > 0
       ? `<div class="pending-points-banner">✨ Pontos para distribuir: <strong>${pending}</strong></div>`
       : '';
@@ -110,7 +166,7 @@ export class ModalManager {
     return `
       <div class="progression-card">
         <div class="progression-top">
-          <span class="level-pill">Nível ${level}</span>
+          <span class="level-pill">Nível ${level}${hpText}</span>
           <span class="xp-label">XP: ${xp} / ${xpToNext}</span>
         </div>
         <div class="xp-bar-track">
@@ -124,6 +180,7 @@ export class ModalManager {
   renderStats(payload, onAllocateStat = null) {
     const stats = payload?.stats ?? payload;
     const progression = payload?.progression;
+    const health = payload?.health;
 
     if (!stats || Object.keys(stats).length === 0) {
       this.elements.statsContent.innerHTML = '<p>Nenhum atributo registrado.</p>';
@@ -131,7 +188,7 @@ export class ModalManager {
     }
 
     const pendingPoints = progression?.pendingStatPoints ?? 0;
-    const headerHtml = progression ? this.renderProgressionHeader(progression) : '';
+    const headerHtml = progression ? this.renderProgressionHeader(progression, health) : '';
 
     const rowsHtml = Object.entries(stats)
       .map(([stat, value]) => {

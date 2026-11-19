@@ -11,6 +11,8 @@ export class UIManager {
       title: document.getElementById('book-title'),
       chapterTitle: document.getElementById('chapter-title'),
       chapterNav: document.getElementById('chapter-nav'),
+      hpHudText: document.getElementById('hp-hud-text'),
+      hpBarFill: document.getElementById('hp-bar-fill'),
       image: document.getElementById('story-image'),
       text: document.getElementById('story-text'),
       options: document.getElementById('options-container'),
@@ -63,6 +65,16 @@ export class UIManager {
     this.elements.title.textContent = bookTitle;
     const locSuffix = location ? ` • 📍 ${location.name}` : '';
     this.elements.chapterTitle.textContent = `${chapterTitle}${locSuffix}`;
+  }
+
+  renderHealthHud(health) {
+    const hp = health?.hp ?? 50;
+    const maxHp = health?.maxHp ?? 50;
+    const pct = maxHp > 0 ? Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100))) : 0;
+
+    this.elements.hpHudText.textContent = `${hp} / ${maxHp}`;
+    this.elements.hpBarFill.style.width = `${pct}%`;
+    this.elements.hpBarFill.classList.toggle('low-hp', pct <= 30);
   }
 
   renderStatsButtonBadge(progression) {
@@ -153,6 +165,18 @@ export class UIManager {
         const chance = engine.getSuccessChance(option.diceRoll.stat, option.diceRoll.dc);
         const statName = option.diceRoll.stat.toUpperCase();
         label += ` [🎲 ${statName} | Chance: ${chance}%]`;
+      }
+
+      if (option.enemy) {
+        label += ` [⚔️ Combate: ${option.enemy.name}]`;
+      }
+
+      if (option.damage > 0) {
+        label += ` [-${option.damage} HP]`;
+      }
+
+      if ((option.heal ?? option.restoreHp ?? 0) > 0) {
+        label += ` [+${option.heal ?? option.restoreHp} HP]`;
       }
 
       const xpReward = option.gainXp ?? option.xp ?? 0;

@@ -96,6 +96,42 @@ h1 {
   margin-bottom: 0.5rem;
 }
 
+/* HUD de Vida (HP) */
+.hp-hud {
+  background-color: #1f1c1a;
+  border: 1px solid #4d4642;
+  border-radius: 6px;
+  padding: 0.65rem 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+.hp-hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+  color: #e8e2d5;
+}
+
+.hp-bar-track {
+  width: 100%;
+  height: 9px;
+  background-color: #332f2c;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2e7d32, #66bb6a);
+  transition: width 0.25s ease;
+}
+
+.hp-bar-fill.low-hp {
+  background: linear-gradient(90deg, #b71c1c, #ef5350);
+}
+
 .image-wrapper img {
   width: 100%;
   max-height: 300px;
@@ -176,7 +212,8 @@ h1 {
   flex-direction: column;
 }
 
-.map-modal-content {
+.map-modal-content,
+.combat-modal-content {
   max-width: 560px;
 }
 
@@ -187,6 +224,65 @@ h1 {
   border-bottom: 1px solid #3d3835;
   padding-bottom: 0.8rem;
   margin-bottom: 1rem;
+}
+
+/* Combate */
+.combat-turn-label {
+  color: #a89f99;
+  font-size: 0.85rem;
+}
+
+.combat-hp-pill {
+  background-color: rgba(76, 175, 80, 0.18);
+  border: 1px solid rgba(76, 175, 80, 0.45);
+  color: #a5d6a7;
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+}
+
+.combat-bars {
+  margin-bottom: 1rem;
+}
+
+.combat-enemy-box {
+  background-color: #1f1c1a;
+  border: 1px solid #4d4642;
+  border-radius: 6px;
+  padding: 0.75rem 0.9rem;
+}
+
+.combat-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-bottom: 0.45rem;
+  color: #e8e2d5;
+}
+
+.enemy-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c62828, #ef5350);
+  transition: width 0.25s ease;
+}
+
+.combat-log-box {
+  background-color: #1f1c1a;
+  border-left: 3px solid #d4a359;
+  border-radius: 4px;
+  padding: 0.85rem;
+  color: #e8e2d5;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  min-height: 3.5rem;
+}
+
+.combat-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 .journal-entry {

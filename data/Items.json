@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "id": "pocao-cura-menor",
+      "name": "Poção de Cura Menor",
+      "type": "consumable",
+      "category": "potion",
+      "rarity": "common",
+      "heal": 18,
+      "description": "Restaura 18 pontos de HP."
+    },
+    {
+      "id": "pocao-vitalidade",
+      "name": "Poção de Vitalidade",
+      "type": "consumable",
+      "category": "potion",
+      "rarity": "rare",
+      "fullHeal": true,
+      "description": "Restaura 100% dos pontos de HP."
+    },
+    {
+      "id": "elixir-forca",
+      "name": "Elixir de Força",
+      "type": "consumable",
+      "category": "potion",
+      "rarity": "uncommon",
+      "heal": 8,
+      "statBoost": {
+        "forca": 3
+      },
+      "description": "Recupera 8 de HP e aumenta Força em +3."
+    },
+    {
+      "id": "elixir-agilidade",
+      "name": "Elixir de Agilidade",
+      "type": "consumable",
+      "category": "potion",
+      "rarity": "uncommon",
+      "heal": 6,
+      "statBoost": {
+        "agilidade": 3
+      },
+      "description": "Recupera 6 de HP e aumenta Agilidade em +3."
+    },
+    {
+      "id": "pergaminho-sabedoria",
+      "name": "Pergaminho de Sabedoria",
+      "type": "consumable",
+      "category": "scroll",
+      "rarity": "uncommon",
+      "statBoost": {
+        "inteligencia": 3
+      },
+      "description": "Aumenta Inteligência em +3."
+    },
+    {
+      "id": "chave-de-ferro",
+      "name": "Chave de Ferro",
+      "type": "gear_or_quest",
+      "category": "key",
+      "rarity": "common",
+      "description": "Chave pesada usada para destrancar portas e grades nas masmorras."
+    },
+    {
+      "id": "adaga-imperial",
+      "name": "Adaga Imperial",
+      "type": "gear_or_quest",
+      "category": "weapon",
+      "rarity": "uncommon",
+      "description": "Lâmina leve de aço imperial, útil em combates próximos e mecanismos."
+    },
+    {
+      "id": "fragmento-cajado-1",
+      "name": "Fragmento do Cajado (1/8)",
+      "type": "gear_or_quest",
+      "category": "quest",
+      "rarity": "legendary",
+      "description": "Parte ancestral do Cajado do Caos, carregada de energia arcana."
+    }
+  ]
+}

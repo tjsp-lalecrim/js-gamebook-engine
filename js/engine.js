@@ -150,9 +150,10 @@ export class GameEngine {
 
   async loadGameData() {
     try {
-      const [booksRes, statsRes] = await Promise.all([
+      const [booksRes, statsRes, itemsRes] = await Promise.all([
         fetch('./data/books.json'),
-        fetch('./data/Stats.json')
+        fetch('./data/Stats.json'),
+        fetch('./data/items.json').catch(() => null)
       ]);
 
       if (!booksRes.ok || !statsRes.ok) {
@@ -162,6 +163,11 @@ export class GameEngine {
       this.allBooks = await booksRes.json();
       const statsData = await statsRes.json();
       this.defaultStats = statsData.defaultStats || {};
+
+      if (itemsRes && itemsRes.ok) {
+        const itemsData = await itemsRes.json();
+        LootSystem.setCatalogFromData(itemsData);
+      }
 
       return { books: this.allBooks, stats: this.defaultStats };
     } catch (error) {

@@ -1,27 +1,93 @@
 export class LootSystem {
   static CATALOG = {
     'Poção de Cura Menor': {
+      id: 'pocao-cura-menor',
       type: 'consumable',
+      category: 'potion',
+      rarity: 'common',
       heal: 18,
       description: 'Restaura 18 pontos de HP.'
     },
     'Poção de Vitalidade': {
+      id: 'pocao-vitalidade',
       type: 'consumable',
+      category: 'potion',
+      rarity: 'rare',
       fullHeal: true,
       description: 'Restaura 100% dos pontos de HP.'
     },
     'Elixir de Força': {
+      id: 'elixir-forca',
       type: 'consumable',
+      category: 'potion',
+      rarity: 'uncommon',
       heal: 8,
       statBoost: { forca: 3 },
       description: 'Recupera 8 de HP e aumenta Força em +3.'
     },
-    'Pergaminho de Sabedoria': {
+    'Elixir de Agilidade': {
+      id: 'elixir-agilidade',
       type: 'consumable',
+      category: 'potion',
+      rarity: 'uncommon',
+      heal: 6,
+      statBoost: { agilidade: 3 },
+      description: 'Recupera 6 de HP e aumenta Agilidade em +3.'
+    },
+    'Pergaminho de Sabedoria': {
+      id: 'pergaminho-sabedoria',
+      type: 'consumable',
+      category: 'scroll',
+      rarity: 'uncommon',
       statBoost: { inteligencia: 3 },
       description: 'Aumenta Inteligência em +3.'
+    },
+    'Chave de Ferro': {
+      id: 'chave-de-ferro',
+      type: 'gear_or_quest',
+      category: 'key',
+      rarity: 'common',
+      description: 'Chave pesada usada para destrancar portas e grades nas masmorras.'
+    },
+    'Adaga Imperial': {
+      id: 'adaga-imperial',
+      type: 'gear_or_quest',
+      category: 'weapon',
+      rarity: 'uncommon',
+      description: 'Lâmina leve de aço imperial, útil em combates próximos e mecanismos.'
+    },
+    'Fragmento do Cajado (1/8)': {
+      id: 'fragmento-cajado-1',
+      type: 'gear_or_quest',
+      category: 'quest',
+      rarity: 'legendary',
+      description: 'Parte ancestral do Cajado do Caos, carregada de energia arcana.'
     }
   };
+
+  static setCatalogFromData(itemsData) {
+    const list = Array.isArray(itemsData) ? itemsData : itemsData?.items;
+    if (!Array.isArray(list) || list.length === 0) return;
+
+    const nextCatalog = {};
+    for (const entry of list) {
+      if (!entry || !entry.name) continue;
+      nextCatalog[entry.name] = {
+        id: entry.id || entry.name,
+        type: entry.type || (entry.heal || entry.fullHeal || entry.statBoost ? 'consumable' : 'gear_or_quest'),
+        category: entry.category || 'misc',
+        rarity: entry.rarity || 'common',
+        heal: entry.heal ?? 0,
+        fullHeal: Boolean(entry.fullHeal),
+        statBoost: entry.statBoost || null,
+        description: entry.description || 'Item de aventura.'
+      };
+    }
+
+    if (Object.keys(nextCatalog).length > 0) {
+      this.CATALOG = nextCatalog;
+    }
+  }
 
   static getItemMetadata(itemName) {
     if (!itemName) return null;

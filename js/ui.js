@@ -1,3 +1,4 @@
+import { LootSystem } from './loot.js';
 import { ModalManager } from './modals.js';
 
 export class UIManager {
@@ -169,6 +170,11 @@ export class UIManager {
 
       if (option.enemy) {
         label += ` [⚔️ Combate: ${option.enemy.name}]`;
+      }
+
+      const lootHints = LootSystem.summarizeLootLabels(option);
+      if (lootHints.length > 0) {
+        label += ` [🎁 Loot: ${lootHints.join(', ')}]`;
       }
 
       if (option.damage > 0) {

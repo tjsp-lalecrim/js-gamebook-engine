@@ -1,5 +1,6 @@
 import { CombatSystem } from './combat.js';
 import { DiceSystem } from './dice.js';
+import { LootSystem } from './loot.js';
 import { ProgressionSystem } from './progression.js';
 import { WorldMapSystem } from './world.js';
 
@@ -203,6 +204,60 @@ export class GameEngine {
     }
   }
 
+  grantLootFromSource(source, shouldSave = false) {
+    const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
+    const rolledItems = LootSystem.collectSourceLoot(source);
+    const added = [];
+
+    for (const itemName of rolledItems) {
+      const meta = LootSystem.getItemMetadata(itemName);
+      const isUniqueQuestOrGear = meta?.type !== 'consumable' && this.state.inventory.includes(itemName);
+      if (!isUniqueQuestOrGear) {
+        this.state.inventory.push(itemName);
+        added.push(itemName);
+      }
+    }
+
+    if (added.length > 0) {
+      this.recordLog(chapterTitle, `Saque obtido: ${added.join(', ')}.`);
+    }
+
+    if (shouldSave) {
+      this.saveProgress();
+    }
+
+    return added;
+  }
+
+  useInventoryItem(itemIndex) {
+    if (!Array.isArray(this.state.inventory)) return null;
+    if (itemIndex < 0 || itemIndex >= this.state.inventory.length) return null;
+
+    const itemName = this.state.inventory[itemIndex];
+    const meta = LootSystem.getItemMetadata(itemName);
+    if (!meta || meta.type !== 'consumable') {
+      return null;
+    }
+
+    this.state.inventory.splice(itemIndex, 1);
+
+    if (meta.statBoost) {
+      this.applyStatChanges(meta.statBoost, false);
+    }
+
+    if (meta.fullHeal) {
+      this.restoreFullHealth(itemName, false);
+    } else if (meta.heal > 0) {
+      this.applyHpChange(meta.heal, itemName, false);
+    }
+
+    const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
+    this.recordLog(chapterTitle, `Você usou ${itemName}.`);
+    this.saveProgress();
+
+    return { itemName, meta };
+  }
+
   syncHealth(healAmountOnLevelUp = 0, shouldSave = false) {
     const base = CombatSystem.syncMaxHp(
       this.state.health,
@@ -303,6 +358,7 @@ export class GameEngine {
     const enemy = CombatSystem.createEnemyState(enemyConfig);
     this.activeCombat = {
       enemy,
+      sourceConfig: enemyConfig,
       turn: 1,
       fallbackBlockId: enemy.fleeBlock || fallbackBlockId || this.state.blockId,
       lastLog: `${enemy.name} entrou em combate!`
@@ -334,9 +390,7 @@ export class GameEngine {
       }
     }
 
-    if (block.giveItem && !this.state.inventory.includes(block.giveItem)) {
-      this.state.inventory.push(block.giveItem);
-    }
+    this.grantLootFromSource(block, false);
 
     if (block.gainStats) {
       this.applyStatChanges(block.gainStats, false);

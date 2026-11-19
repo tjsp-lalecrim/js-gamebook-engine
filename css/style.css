@@ -637,4 +637,36 @@ h1 {
   color: #d4a359;
   font-weight: bold;
   border-left: 3px solid #d4a359;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.inventory-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.inventory-item-desc {
+  color: #a89f99;
+  font-weight: normal;
+  font-size: 0.8rem;
+}
+
+.use-item-btn {
+  background-color: #d4a359;
+  color: #1a1817;
+  border: none;
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  font-weight: bold;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.use-item-btn:hover {
+  background-color: #f0c27b;
 }

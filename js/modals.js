@@ -1,4 +1,5 @@
 import { DiceSystem } from './dice.js';
+import { LootSystem } from './loot.js';
 import { WorldMapSystem } from './world.js';
 
 export class ModalManager {
@@ -225,17 +226,43 @@ export class ModalManager {
     }
   }
 
-  renderInventory(inventory) {
-    this.elements.invCount.textContent = inventory.length;
+  renderInventory(inventory, onUseItem = null) {
+    const list = Array.isArray(inventory) ? inventory : [];
+    this.elements.invCount.textContent = list.length;
 
-    if (!inventory || inventory.length === 0) {
+    if (list.length === 0) {
       this.elements.inventoryContent.innerHTML = '<p>A mochila está vazia.</p>';
       return;
     }
 
-    this.elements.inventoryContent.innerHTML = inventory
-      .map(item => `<div class="inventory-item">🎒 ${item}</div>`)
+    this.elements.inventoryContent.innerHTML = list
+      .map((item, idx) => {
+        const meta = LootSystem.getItemMetadata(item);
+        const isConsumable = meta?.type === 'consumable';
+        const useBtn = isConsumable
+          ? `<button class="use-item-btn" data-item-index="${idx}">Usar</button>`
+          : '';
+
+        return `
+          <div class="inventory-item">
+            <div class="inventory-item-info">
+              <span>🎒 ${item}</span>
+              <small class="inventory-item-desc">${meta?.description || ''}</small>
+            </div>
+            ${useBtn}
+          </div>
+        `;
+      })
       .join('');
+
+    if (onUseItem) {
+      this.elements.inventoryContent.querySelectorAll('.use-item-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const index = Number(btn.getAttribute('data-item-index'));
+          onUseItem(index);
+        });
+      });
+    }
   }
 
   renderJournal(history) {
@@ -257,7 +284,7 @@ export class ModalManager {
       if (show) this.renderStats(data, actionCallback);
       this.elements.statsModal.classList.toggle('hidden', !show);
     } else if (modalName === 'inventory') {
-      if (show) this.renderInventory(data);
+      if (show) this.renderInventory(data, actionCallback);
       this.elements.inventoryModal.classList.toggle('hidden', !show);
     } else if (modalName === 'journal') {
       if (show) this.renderJournal(data);

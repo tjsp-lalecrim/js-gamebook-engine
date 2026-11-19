@@ -24,9 +24,18 @@ function startBook(book) {
   loadCurrentBlock();
 }
 
+function handleUseInventoryItem(itemIndex) {
+  const used = engine.useInventoryItem(itemIndex);
+  if (used) {
+    playSound('success');
+    syncHud();
+    ui.modals.renderInventory(engine.state.inventory, handleUseInventoryItem);
+  }
+}
+
 function syncHud() {
   ui.renderHealthHud(engine.state.health);
-  ui.modals.renderInventory(engine.state.inventory);
+  ui.modals.renderInventory(engine.state.inventory, handleUseInventoryItem);
   ui.renderStatsButtonBadge(engine.state.progression);
 }
 
@@ -75,6 +84,7 @@ function checkActiveCombatIfAny() {
 
   const finishCombat = (outcome) => {
     const enemy = combat.enemy;
+    const sourceConfig = combat.sourceConfig || enemy;
     const chapterTitle = engine.getCurrentChapter()?.title || 'Combate';
     engine.clearCombat();
 
@@ -92,6 +102,7 @@ function checkActiveCombatIfAny() {
 
     if (outcome === 'victory') {
       engine.recordLog(chapterTitle, `${enemy.name} foi derrotado!`);
+      engine.grantLootFromSource(sourceConfig, false);
       if (enemy.xpReward > 0) {
         engine.gainExperience(enemy.xpReward, false);
       }
@@ -155,7 +166,7 @@ function checkActiveCombatIfAny() {
       combat.lastLog = `${msg}${enemy.defeatText} (+${enemy.xpReward} XP)`;
       ui.modals.updateCombatState(combat, engine.state.health, {
         isFinished: true,
-        finishLabel: 'Coletar Recompensa e Continuar →'
+        finishLabel: 'Coletar Saque e Continuar →'
       });
       ui.modals.elements.combatFinishBtn.onclick = () => {
         ui.modals.hideCombatModal();
@@ -185,7 +196,7 @@ function checkActiveCombatIfAny() {
         combat.lastLog = `Esquiva perfeita!${counterText} ${enemy.defeatText}`;
         ui.modals.updateCombatState(combat, engine.state.health, {
           isFinished: true,
-          finishLabel: 'Continuar →'
+          finishLabel: 'Coletar Saque e Continuar →'
         });
         ui.modals.elements.combatFinishBtn.onclick = () => {
           ui.modals.hideCombatModal();
@@ -301,6 +312,10 @@ function handleOptionSelect(option) {
   applyOptionHealthEffects(option, false);
   applyOptionXp(option, false);
 
+  if (!option.diceRoll) {
+    engine.grantLootFromSource(option, false);
+  }
+
   if (engine.state.health.hp <= 0) {
     handlePlayerDefeat();
     return;
@@ -361,6 +376,7 @@ function executeDiceCheck(option) {
           if (option.gainStats) {
             engine.applyStatChanges(option.gainStats, false);
           }
+          engine.grantLootFromSource(option, false);
           applyOptionXp(option, false);
         } else if (option.failDamage > 0) {
           engine.applyHpChange(-option.failDamage, 'Falha no Teste', false);
@@ -446,7 +462,7 @@ ui.elements.closeStatsBtn.addEventListener('click', () => {
 
 ui.elements.inventoryBtn.addEventListener('click', () => {
   playSound('click');
-  ui.modals.toggle('inventory', true, engine.state.inventory);
+  ui.modals.toggle('inventory', true, engine.state.inventory, handleUseInventoryItem);
 });
 ui.elements.closeInventoryBtn.addEventListener('click', () => {
   playSound('click');

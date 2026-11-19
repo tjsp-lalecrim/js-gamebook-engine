@@ -51,6 +51,9 @@
                 "text": "Arrombar a fechadura enferrujada da cela",
                 "diceRoll": { "stat": "forca", "dc": 12 },
                 "failDamage": 6,
+                "loot": [
+                  { "item": "Poção de Cura Menor", "chance": 75 }
+                ],
                 "gainXp": 35,
                 "nextBlock": "corredor_guarda",
                 "failBlock": "falha_grade"
@@ -58,6 +61,9 @@
               {
                 "text": "Procurar uma passagem solta nas pedras do chão",
                 "diceRoll": { "stat": "inteligencia", "dc": 10 },
+                "loot": [
+                  { "item": "Poção de Cura Menor", "chance": 80 }
+                ],
                 "gainXp": 35,
                 "nextBlock": "tunel_secreto",
                 "failBlock": "falha_grade"
@@ -68,6 +74,9 @@
             "image": "https://picsum.photos/seed/trap/650/300",
             "content": "O barulho ecoa pelo corredor! Um goblin vigia se aproxima, mas tropeça e deixa cair uma chave antes de recuar assustado.",
             "giveItem": "Chave de Ferro",
+            "loot": [
+              { "item": "Poção de Cura Menor", "chance": 60 }
+            ],
             "giveXp": 20,
             "options": [
               { "text": "Usar a Chave de Ferro e sair da cela", "nextBlock": "corredor_guarda" }
@@ -77,6 +86,9 @@
             "image": "https://picsum.photos/seed/tunnel/650/300",
             "content": "Você encontra um alçapão antigo que leva diretamente aos esgotos reais, evitando os guardas e encontrando uma adaga abandonada.",
             "giveItem": "Adaga Imperial",
+            "loot": [
+              { "item": "Elixir de Força", "chance": 70 }
+            ],
             "heal": 10,
             "giveXp": 45,
             "options": [
@@ -96,6 +108,10 @@
               "damageMin": 5,
               "damageMax": 9,
               "xpReward": 55,
+              "loot": [
+                { "item": "Poção de Cura Menor", "chance": 85 },
+                { "item": "Elixir de Força", "chance": 50 }
+              ],
               "defeatBlock": "portal_cap1",
               "fleeBlock": "ferido_guarda",
               "defeatText": "O guarda tomba e abre caminho para a câmara seguinte!"
@@ -124,6 +140,9 @@
           "portal_cap1": {
             "image": "https://picsum.photos/seed/portal/650/300",
             "content": "Ria Silmane abre um portal dimensional que leva às províncias externas de Tamriel. Você sobreviveu às masmorras!",
+            "loot": [
+              { "item": "Poção de Vitalidade", "chance": 100 }
+            ],
             "heal": 15,
             "giveXp": 60,
             "options": [
@@ -145,6 +164,9 @@
               {
                 "text": "Decifrar as runas antigas na porta do templo",
                 "diceRoll": { "stat": "inteligencia", "dc": 12 },
+                "loot": [
+                  { "item": "Pergaminho de Sabedoria", "chance": 75 }
+                ],
                 "gainXp": 55,
                 "nextBlock": "salao_cajado",
                 "failBlock": "emboscada_gelo"
@@ -175,6 +197,9 @@
             "image": "https://picsum.photos/seed/staff/650/300",
             "content": "Sobre o altar de cristal repousa o Primeiro Fragmento do Cajado do Caos! O poder arcano pulsa em suas mãos.",
             "giveItem": "Fragmento do Cajado (1/8)",
+            "loot": [
+              { "item": "Poção de Vitalidade", "chance": 100 }
+            ],
             "fullHeal": true,
             "giveXp": 80,
             "options": [
@@ -207,6 +232,9 @@
               "damageMin": 7,
               "damageMax": 13,
               "xpReward": 110,
+              "loot": [
+                { "item": "Poção de Vitalidade", "chance": 100 }
+              ],
               "defeatBlock": "vitoria_final",
               "fleeBlock": "palacio_portoes",
               "defeatText": "A ilusão de Jagar Tharn se estilhaça sob o poder arcano!"

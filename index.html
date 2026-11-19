@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1817">
   <title>Livro-Jogo: Elder Scrolls Arena</title>
   <link rel="stylesheet" href="./css/style.css">
 </head>
@@ -10,7 +11,7 @@
   <main class="book-container">
     <!-- TELA 1: BIBLIOTECA -->
     <section id="library-screen">
-      <header>
+      <header class="screen-header">
         <h1>Elder Scrolls: Arena</h1>
         <button id="audio-toggle-btn" class="nav-btn" title="Ativar/Desativar Sons">🔊 Som: Ligado</button>
       </header>
@@ -20,8 +21,8 @@
 
     <!-- TELA 2: LEITURA DO LIVRO -->
     <section id="game-screen" class="hidden">
-      <header>
-        <div>
+      <header class="screen-header game-header">
+        <div class="header-main">
           <button id="back-btn" class="nav-btn">← Livros</button>
           <h1 id="book-title">Título</h1>
           <span id="chapter-title" class="chapter-badge">Capítulo I</span>
@@ -30,7 +31,7 @@
       </header>
 
       <!-- Seletor de Capítulos -->
-      <div id="chapter-nav" class="chapter-nav"></div>
+      <div id="chapter-nav" class="chapter-nav" aria-label="Navegação de capítulos"></div>
 
       <!-- HUD DE VIDA (HP) -->
       <div class="hp-hud">
@@ -92,7 +93,7 @@
           <button id="combat-flee-btn" class="option-btn">🏃 Fugir (Velocidade)</button>
         </div>
 
-        <button id="combat-finish-btn" class="option-btn hidden" style="text-align: center; margin-top: 0.8rem;">
+        <button id="combat-finish-btn" class="option-btn hidden combat-finish-btn">
           Prosseguir →
         </button>
       </div>
@@ -142,13 +143,13 @@
       <div class="modal-content dice-modal-content">
         <h2 id="dice-check-title">Teste de Atributo</h2>
         <p id="dice-dc-info" class="dice-info">Dificuldade (CD): 15</p>
-        
+
         <div id="dice-box" class="dice-box">🎲</div>
-        
+
         <div id="dice-math" class="dice-math">Rolando d20...</div>
         <div id="dice-result-banner" class="dice-result-banner hidden"></div>
-        
-        <button id="dice-continue-btn" class="option-btn hidden" style="text-align: center; margin-top: 1rem;">
+
+        <button id="dice-continue-btn" class="option-btn hidden dice-continue-btn">
           Continuar História →
         </button>
       </div>

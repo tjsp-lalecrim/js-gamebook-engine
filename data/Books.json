@@ -2,7 +2,7 @@
   {
     "id": "arena-completo",
     "title": "The Elder Scrolls: Arena",
-    "description": "A saga do Campeão Eterno dividida em quests e capítulos para resgatar Uriel Septim VII.",
+    "description": "A saga completa do Campeão Eterno dividida em quests e capítulos para resgatar Uriel Septim VII e restaurar o Império.",
     "initialStats": {
       "forca": 55,
       "agilidade": 55,
@@ -21,13 +21,13 @@
         "requiredChapter": 0
       },
       {
-        "id": "esgotos-reais",
-        "name": "Esgotos Reais",
-        "region": "Cyrodiil • Subterrâneos da Capital",
-        "description": "Túneis antigos e câmaras inundadas que conduzem ao portal dimensional de Ria Silmane.",
+        "id": "esgotos-da-cidade",
+        "name": "Esgotos da Cidade Imperial",
+        "region": "Cyrodiil • Subterrâneos",
+        "description": "Túneis inundados e passagens esquecidas que ligam as masmorras aos arredores da capital.",
         "questIndex": 0,
         "chapterIndex": 1,
-        "blockId": "corredor_guarda",
+        "blockId": "esgotos_entrada",
         "requiredQuest": 0,
         "requiredChapter": 1
       },
@@ -43,22 +43,33 @@
         "requiredChapter": 0
       },
       {
+        "id": "camara-das-runas",
+        "name": "Câmara das Runas Gélidas",
+        "region": "Skyrim • Santuário Ancestral",
+        "description": "O coração congelado do labirinto, guardado por constructos e selos arcanos.",
+        "questIndex": 1,
+        "chapterIndex": 1,
+        "blockId": "salao_cajado",
+        "requiredQuest": 1,
+        "requiredChapter": 1
+      },
+      {
         "id": "salao-do-trono",
         "name": "Salão do Trono",
         "region": "Cyrodiil • Palácio Imperial",
         "description": "O coração do Império, onde Jagar Tharn mantém sua ilusão e aguarda o confronto final.",
-        "questIndex": 1,
-        "chapterIndex": 1,
+        "questIndex": 2,
+        "chapterIndex": 0,
         "blockId": "palacio_portoes",
-        "requiredQuest": 1,
-        "requiredChapter": 1
+        "requiredQuest": 2,
+        "requiredChapter": 0
       }
     ],
     "quests": [
       {
         "id": "quest-1-fuga",
-        "title": "Quest I: Fuga da Capital",
-        "description": "Escape das masmorras imperiais e alcance o portal dimensional.",
+        "title": "Quest I: A Fuga das Masmorras",
+        "description": "Escape das masmorras imperiais e sobreviva aos túneis sob a Cidade Imperial.",
         "startChapter": 0,
         "chapters": [
           {
@@ -78,12 +89,11 @@
                       { "item": "Poção de Cura Menor", "chance": 75 }
                     ],
                     "gainXp": 35,
-                    "nextChapter": 1,
                     "nextBlock": "corredor_guarda",
                     "failBlock": "falha_grade"
                   },
                   {
-                    "text": "Procurar uma passagem solta nas pedras do chão",
+                    "text": "Investigar uma pedra solta perto da parede",
                     "diceRoll": { "stat": "inteligencia", "dc": 10 },
                     "loot": [
                       { "item": "Poção de Cura Menor", "chance": 80 }
@@ -96,23 +106,19 @@
               },
               "falha_grade": {
                 "image": "https://picsum.photos/seed/trap/650/300",
-                "content": "O barulho ecoa pelo corredor! Um goblin vigia se aproxima, mas tropeça e deixa cair uma chave antes de recuar assustado.",
+                "content": "O estrondo ecoa pelo corredor! Um goblin vigia surge na penumbra, tropeça nas próprias botas e deixa cair uma chave antes de recuar.",
                 "giveItem": "Chave de Ferro",
                 "loot": [
-                  { "item": "Poção de Cura Menor", "chance": 60 }
+                  { "item": "Poção de Cura Menor", "chance": 65 }
                 ],
                 "giveXp": 20,
                 "options": [
-                  {
-                    "text": "Usar a Chave de Ferro e avançar para os esgotos",
-                    "nextChapter": 1,
-                    "nextBlock": "corredor_guarda"
-                  }
+                  { "text": "Usar a Chave de Ferro para abrir a cela", "nextBlock": "corredor_guarda" }
                 ]
               },
               "tunel_secreto": {
                 "image": "https://picsum.photos/seed/tunnel/650/300",
-                "content": "Você encontra um alçapão antigo que leva diretamente aos esgotos reais, evitando os guardas e encontrando uma adaga abandonada.",
+                "content": "A pedra cede e revela um duto estreito. Você encontra uma lâmina abandonada e segue adiante longe dos olhos dos carcereiros.",
                 "giveItem": "Adaga Imperial",
                 "loot": [
                   { "item": "Elixir de Força", "chance": 70 }
@@ -120,20 +126,9 @@
                 "heal": 10,
                 "giveXp": 45,
                 "options": [
-                  {
-                    "text": "Seguir para o Portal de Saída",
-                    "nextChapter": 1,
-                    "nextBlock": "portal_cap1"
-                  }
+                  { "text": "Seguir para o Capítulo II da Quest", "nextChapter": 1 }
                 ]
-              }
-            }
-          },
-          {
-            "id": "q1-cap-2",
-            "title": "Capítulo II: Esgotos e Portal",
-            "startBlock": "corredor_guarda",
-            "blocks": {
+              },
               "corredor_guarda": {
                 "image": "https://picsum.photos/seed/guard/650/300",
                 "content": "Um Guarda Corrompido por Tharn bloqueia a ponte sobre o fosso subterrâneo, brandindo uma alabarda.",
@@ -153,7 +148,7 @@
                   ],
                   "defeatBlock": "portal_cap1",
                   "fleeBlock": "ferido_guarda",
-                  "defeatText": "O guarda tomba e abre caminho para a câmara seguinte!"
+                  "defeatText": "O guarda tomba e abre caminho para a saída do corredor!"
                 },
                 "options": [
                   {
@@ -168,25 +163,65 @@
               },
               "ferido_guarda": {
                 "image": "https://picsum.photos/seed/blood/650/300",
-                "content": "Você recebe um golpe durante a fuga, mas consegue empurrar o perseguidor e alcançar a câmara seguinte.",
+                "content": "Você recebe um golpe durante a manobra, mas consegue empurrar o perseguidor e alcançar a passagem seguinte.",
                 "modifyStats": { "forca": -5 },
                 "damage": 8,
                 "giveXp": 25,
                 "options": [
-                  { "text": "Entrar na Câmara do Portal", "nextBlock": "portal_cap1" }
+                  { "text": "Avançar para a Câmara do Portal", "nextBlock": "portal_cap1" }
                 ]
               },
               "portal_cap1": {
                 "image": "https://picsum.photos/seed/portal/650/300",
-                "content": "Ria Silmane abre um portal dimensional que leva às províncias externas de Tamriel. A primeira quest está concluída!",
+                "content": "Você alcança a saída das masmorras superiores e sente o ar mais fresco dos túneis antigos.",
+                "loot": [
+                  { "item": "Poção de Cura Menor", "chance": 100 }
+                ],
+                "heal": 12,
+                "giveXp": 50,
+                "options": [
+                  { "text": "Descer para os Esgotos da Cidade Imperial →", "nextChapter": 1 },
+                  { "text": "Abrir o Mapa-Mundi 🗺️", "openMap": true }
+                ]
+              }
+            }
+          },
+          {
+            "id": "q1-cap-2",
+            "title": "Capítulo II: Os Esgotos da Cidade",
+            "startBlock": "esgotos_entrada",
+            "blocks": {
+              "esgotos_entrada": {
+                "image": "https://picsum.photos/seed/sewers/650/300",
+                "content": "Sob as ruas da capital, a água corre por canais antigos. Uma comporta trancada bloqueia a rota direta para a superfície.",
+                "options": [
+                  {
+                    "text": "Destrancar a comporta com a Chave de Ferro",
+                    "requiredItem": "Chave de Ferro",
+                    "gainXp": 45,
+                    "nextBlock": "fim_quest_1"
+                  },
+                  {
+                    "text": "Escalar a tubulação escorregadia até a grade",
+                    "diceRoll": { "stat": "agilidade", "dc": 12 },
+                    "failDamage": 7,
+                    "gainXp": 55,
+                    "nextBlock": "fim_quest_1",
+                    "failBlock": "esgotos_entrada"
+                  }
+                ]
+              },
+              "fim_quest_1": {
+                "image": "https://picsum.photos/seed/portal/650/300",
+                "content": "Ria Silmane surge em meio às névoas e abre um portal dimensional: 'A primeira etapa está concluída. Siga para o Labirinto de Cristal!'",
                 "loot": [
                   { "item": "Poção de Vitalidade", "chance": 100 }
                 ],
                 "heal": 15,
-                "giveXp": 60,
+                "giveXp": 70,
                 "options": [
-                  { "text": "Iniciar Quest II: O Cajado do Caos →", "nextQuest": 1 },
-                  { "text": "Abrir o Mapa-Mundi e escolher destino 🗺️", "openMap": true }
+                  { "text": "Iniciar Quest II: O Labirinto de Cristal →", "nextQuest": 1 },
+                  { "text": "Abrir o Mapa-Mundi 🗺️", "openMap": true }
                 ]
               }
             }
@@ -194,41 +229,41 @@
         ]
       },
       {
-        "id": "quest-2-cajado",
-        "title": "Quest II: O Cajado do Caos",
-        "description": "Recupere o fragmento em Skyrim e enfrente a ilusão de Jagar Tharn no Palácio Imperial.",
+        "id": "quest-2-labirinto",
+        "title": "Quest II: O Labirinto de Cristal",
+        "description": "Explore as ruínas geladas de Skyrim e recupere o primeiro fragmento do Cajado do Caos.",
         "startChapter": 0,
         "chapters": [
           {
             "id": "q2-cap-1",
-            "title": "Capítulo I: O Labirinto de Cristal",
+            "title": "Capítulo I: Ruínas do Norte",
             "startBlock": "entrada_ruinas",
             "blocks": {
               "entrada_ruinas": {
                 "image": "https://picsum.photos/seed/ruins/650/300",
-                "content": "Seguindo as visões de Ria, você viaja até as montanhas geladas de Skyrim para recuperar o primeiro fragmento do Cajado do Caos.",
+                "content": "Seguindo as visões de Ria, você chega às montanhas geladas de Skyrim onde o vento uiva entre pilares de cristal.",
                 "options": [
                   {
-                    "text": "Decifrar as runas antigas na porta do templo",
+                    "text": "Decifrar as runas antigas no portal do templo",
                     "diceRoll": { "stat": "inteligencia", "dc": 12 },
                     "loot": [
-                      { "item": "Pergaminho de Sabedoria", "chance": 75 }
+                      { "item": "Pergaminho de Sabedoria", "chance": 80 }
                     ],
                     "gainXp": 55,
                     "nextBlock": "salao_cajado",
                     "failBlock": "emboscada_gelo"
                   },
                   {
-                    "text": "Usar a Adaga Imperial como alavanca no mecanismo",
+                    "text": "Acionar a engrenagem usando a Adaga Imperial",
                     "requiredItem": "Adaga Imperial",
-                    "gainXp": 45,
+                    "gainXp": 50,
                     "nextBlock": "salao_cajado"
                   }
                 ]
               },
               "emboscada_gelo": {
                 "image": "https://picsum.photos/seed/ice/650/300",
-                "content": "As runas ativam uma armadilha de gelo! Você precisa saltar antes que o teto desabe.",
+                "content": "As runas ativam uma armadilha de gelo! Estacas congeladas caem enquanto você busca abrigo.",
                 "damage": 10,
                 "options": [
                   {
@@ -242,7 +277,7 @@
               },
               "salao_cajado": {
                 "image": "https://picsum.photos/seed/staff/650/300",
-                "content": "Sobre o altar de cristal repousa o Primeiro Fragmento do Cajado do Caos! O poder arcano pulsa em suas mãos.",
+                "content": "Sobre o altar de cristal repousa o Fragmento do Cajado (1/8)! Uma energia ancestral responde ao seu toque.",
                 "giveItem": "Fragmento do Cajado (1/8)",
                 "loot": [
                   { "item": "Poção de Vitalidade", "chance": 100 }
@@ -250,8 +285,8 @@
                 "fullHeal": true,
                 "giveXp": 80,
                 "options": [
-                  { "text": "Avançar para o Capítulo II: O Trono Usurpado →", "nextChapter": 1 },
-                  { "text": "Consultar o Mapa-Mundi 🗺️", "openMap": true }
+                  { "text": "Avançar para a Câmara das Runas →", "nextChapter": 1 },
+                  { "text": "Iniciar Quest III: O Trono Usurpado →", "nextQuest": 2 }
                 ]
               },
               "fim_congelado": {
@@ -263,12 +298,64 @@
           },
           {
             "id": "q2-cap-2",
-            "title": "Capítulo II: O Trono Usurpado",
+            "title": "Capítulo II: Câmara das Runas Gélidas",
+            "startBlock": "camara_runas_bloco",
+            "blocks": {
+              "camara_runas_bloco": {
+                "image": "https://picsum.photos/seed/crystal/650/300",
+                "content": "Ao erguer o fragmento, um guardião de gelo desperta para testar sua determinação antes de liberar o retorno a Cyrodiil.",
+                "enemy": {
+                  "id": "sentinela-cristal",
+                  "name": "Sentinela de Cristal",
+                  "hp": 34,
+                  "attackStat": "forca",
+                  "attackBonus": 3,
+                  "dc": 12,
+                  "damageMin": 6,
+                  "damageMax": 11,
+                  "xpReward": 75,
+                  "loot": [
+                    { "item": "Elixir de Agilidade", "chance": 75 },
+                    { "item": "Pergaminho de Sabedoria", "chance": 65 }
+                  ],
+                  "defeatBlock": "conclusao_quest_2",
+                  "fleeBlock": "entrada_ruinas",
+                  "defeatText": "O Sentinela se desfaz em estilhaços luminosos!"
+                },
+                "options": [
+                  {
+                    "text": "Retornar à entrada do templo",
+                    "nextBlock": "entrada_ruinas"
+                  }
+                ]
+              },
+              "conclusao_quest_2": {
+                "image": "https://picsum.photos/seed/portal/650/300",
+                "content": "Com o fragmento protegido, o caminho de volta ao Palácio Imperial se abre diante de você.",
+                "giveXp": 80,
+                "options": [
+                  { "text": "Seguir para Quest III: O Trono Usurpado →", "nextQuest": 2 },
+                  { "text": "Abrir o Mapa-Mundi 🗺️", "openMap": true }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "quest-3-trono",
+        "title": "Quest III: O Trono Usurpado",
+        "description": "Enfrente Jagar Tharn no Palácio Imperial e devolva o trono ao Imperador Uriel Septim VII.",
+        "startChapter": 0,
+        "chapters": [
+          {
+            "id": "q3-cap-1",
+            "title": "Capítulo I: O Salão do Trono",
             "startBlock": "palacio_portoes",
             "blocks": {
               "palacio_portoes": {
                 "image": "https://picsum.photos/seed/palace/650/300",
-                "content": "Com o Cajado do Caos reforjado em mãos, você retorna ao Palácio Imperial. Jagar Tharn aguarda no Salão do Trono.",
+                "content": "De volta ao Palácio Imperial, você confronta a ilusão arcana de Jagar Tharn diante do trono de Tamriel.",
                 "enemy": {
                   "id": "jagar-tharn-ilusao",
                   "name": "Jagar Tharn (Ilusão Arcana)",
@@ -288,7 +375,7 @@
                 },
                 "options": [
                   {
-                    "text": "Canalizar o poder do Fragmento para encerrar a ilusão",
+                    "text": "Canalizar o poder do Fragmento para dissipar a ilusão",
                     "requiredItem": "Fragmento do Cajado (1/8)",
                     "diceRoll": { "stat": "inteligencia", "dc": 12 },
                     "gainXp": 100,
@@ -299,13 +386,13 @@
               },
               "vitoria_final": {
                 "image": "https://picsum.photos/seed/crown/650/300",
-                "content": "A energia do Cajado destrói a ilusão de Jagar Tharn. A fenda dimensional se abre e o verdadeiro Imperador Uriel Septim VII retorna ao trono, nomeando você o Campeão Eterno!",
+                "content": "A ilusão se desfaz por completo. O verdadeiro Imperador Uriel Septim VII retorna ao trono e saúda você como o Campeão Eterno de Tamriel!",
                 "giveXp": 150,
                 "options": []
               },
               "derrota_tharn": {
                 "image": "https://picsum.photos/seed/fire/650/300",
-                "content": "Um raio arcano de Tharn atinge seu peito antes que você possa reagir. O Império cai nas trevas.",
+                "content": "Um raio arcano de Tharn atinge você em cheio. O Império permanece sob sombra.",
                 "damage": 999,
                 "options": []
               }

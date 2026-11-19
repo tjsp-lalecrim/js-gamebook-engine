@@ -571,9 +571,17 @@ h2 {
 }
 
 @keyframes shakeDice {
-  0% { transform: rotate(-10deg) scale(1.05); }
-  50% { transform: rotate(10deg) scale(0.95); }
-  100% { transform: rotate(-10deg) scale(1.05); }
+  0% {
+    transform: rotate(-10deg) scale(1.05);
+  }
+
+  50% {
+    transform: rotate(10deg) scale(0.95);
+  }
+
+  100% {
+    transform: rotate(-10deg) scale(1.05);
+  }
 }
 
 .dice-math {
@@ -818,5 +826,83 @@ h2 {
 
   .modal-list-content {
     max-height: 52vh;
+  }
+
+  /* Diário Organizado por Quests */
+  .journal-filter-bar {
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .journal-filter-pill {
+    background-color: #1f1c1a;
+    border: 1px solid #4d4642;
+    color: #a89f99;
+    min-height: 36px;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .journal-filter-pill.active {
+    border-color: #d4a359;
+    color: #1a1817;
+    background-color: #d4a359;
+    font-weight: bold;
+  }
+
+  .journal-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .journal-quest-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .journal-quest-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid #3d3835;
+  }
+
+  .journal-quest-title {
+    font-size: 0.94rem;
+    color: #d4a359;
+  }
+
+  .journal-quest-count {
+    font-size: 0.75rem;
+    color: #a89f99;
+    white-space: nowrap;
+  }
+
+  .journal-quest-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .journal-entry {
+    background-color: #1f1c1a;
+    padding: 0.75rem 0.85rem;
+    border-radius: 6px;
+    border-left: 3px solid #d4a359;
+    line-height: 1.45;
+    color: #e8e2d5;
   }
 }

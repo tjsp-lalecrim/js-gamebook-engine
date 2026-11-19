@@ -7,9 +7,9 @@ export class ModalManager {
     this.elements = {
       combatModal: document.getElementById('combat-modal'),
       combatEnemyName: document.getElementById('combat-enemy-name'),
+      combatEnemyLabel: document.getElementById('combat-enemy-label'),
       combatTurnLabel: document.getElementById('combat-turn-label'),
       combatPlayerHpPill: document.getElementById('combat-player-hp-pill'),
-      combatEnemyLabel: document.getElementById('combat-enemy-label'),
       combatEnemyHpText: document.getElementById('combat-enemy-hp-text'),
       combatEnemyHpFill: document.getElementById('combat-enemy-hp-fill'),
       combatLogBox: document.getElementById('combat-log-box'),
@@ -40,45 +40,49 @@ export class ModalManager {
       diceResultBanner: document.getElementById('dice-result-banner'),
       diceContinueBtn: document.getElementById('dice-continue-btn')
     };
+
+    this.selectedJournalQuest = 'ALL';
   }
 
   formatModifier(mod) {
     return mod >= 0 ? `+${mod}` : `${mod}`;
   }
 
-  openCombatModal(combatState, playerHealth, callbacks = {}) {
-    this.updateCombatState(combatState, playerHealth, { isFinished: false });
+  openCombatModal(combat, playerHealth, handlers = {}) {
+    this.updateCombatState(combat, playerHealth, { isFinished: false });
+    this.elements.combatModal.classList.remove('hidden');
 
-    this.elements.combatAttackBtn.onclick = () => callbacks.onAttack?.();
-    this.elements.combatDodgeBtn.onclick = () => callbacks.onDodge?.();
-    this.elements.combatFleeBtn.onclick = () => callbacks.onFlee?.();
+    this.elements.combatAttackBtn.onclick = () => handlers.onAttack && handlers.onAttack();
+    this.elements.combatDodgeBtn.onclick = () => handlers.onDodge && handlers.onDodge();
+    this.elements.combatFleeBtn.onclick = () => handlers.onFlee && handlers.onFlee();
     this.elements.combatFinishBtn.onclick = () => {
       this.hideCombatModal();
-      callbacks.onFinish?.();
+      if (handlers.onFinish) handlers.onFinish();
     };
-
-    this.elements.combatModal.classList.remove('hidden');
   }
 
-  updateCombatState(combatState, playerHealth, options = {}) {
-    if (!combatState?.enemy) return;
-    const { enemy, turn = 1, lastLog = '' } = combatState;
-    const hp = playerHealth?.hp ?? 50;
-    const maxHp = playerHealth?.maxHp ?? 50;
-    const enemyPct = Math.max(0, Math.min(100, Math.round((enemy.hp / enemy.maxHp) * 100)));
+  updateCombatState(combat, playerHealth, options = {}) {
+    const enemy = combat?.enemy;
+    if (!enemy) return;
 
-    this.elements.combatEnemyName.textContent = `Combate: ${enemy.name}`;
-    this.elements.combatTurnLabel.textContent = `Turno ${turn} • CD ${enemy.dc}`;
-    this.elements.combatPlayerHpPill.textContent = `Seu HP: ${hp}/${maxHp}`;
+    const pHp = playerHealth?.hp ?? 0;
+    const pMaxHp = playerHealth?.maxHp ?? 50;
+    const eHp = Math.max(0, enemy.hp ?? 0);
+    const eMaxHp = Math.max(1, enemy.maxHp ?? 1);
+    const ePct = Math.max(0, Math.min(100, Math.round((eHp / eMaxHp) * 100)));
+
+    this.elements.combatEnemyName.textContent = enemy.name;
     this.elements.combatEnemyLabel.textContent = enemy.name;
-    this.elements.combatEnemyHpText.textContent = `${enemy.hp} / ${enemy.maxHp} HP`;
-    this.elements.combatEnemyHpFill.style.width = `${enemyPct}%`;
-    this.elements.combatLogBox.textContent = lastLog;
+    this.elements.combatTurnLabel.textContent = `Turno ${combat.turn || 1}`;
+    this.elements.combatPlayerHpPill.textContent = `HP: ${pHp}/${pMaxHp}`;
+    this.elements.combatEnemyHpText.textContent = `${eHp} / ${eMaxHp} HP`;
+    this.elements.combatEnemyHpFill.style.width = `${ePct}%`;
+    this.elements.combatLogBox.textContent = combat.lastLog || 'Combate em andamento...';
 
     const isFinished = Boolean(options.isFinished);
     this.elements.combatActions.classList.toggle('hidden', isFinished);
     this.elements.combatFinishBtn.classList.toggle('hidden', !isFinished);
-    if (isFinished && options.finishLabel) {
+    if (options.finishLabel) {
       this.elements.combatFinishBtn.textContent = options.finishLabel;
     }
   }
@@ -152,14 +156,13 @@ export class ModalManager {
     }
   }
 
-  renderProgressionHeader(progression, health = null) {
+  renderProgressionHeader(progression) {
     const level = progression?.level ?? 1;
     const xp = progression?.xp ?? 0;
     const xpToNext = progression?.xpToNextLevel ?? 100;
     const pending = progression?.pendingStatPoints ?? 0;
     const pct = Math.max(0, Math.min(100, Math.round((xp / xpToNext) * 100)));
 
-    const hpText = health ? ` • ❤️ HP: ${health.hp}/${health.maxHp}` : '';
     const pendingBadge = pending > 0
       ? `<div class="pending-points-banner">✨ Pontos para distribuir: <strong>${pending}</strong></div>`
       : '';
@@ -167,7 +170,7 @@ export class ModalManager {
     return `
       <div class="progression-card">
         <div class="progression-top">
-          <span class="level-pill">Nível ${level}${hpText}</span>
+          <span class="level-pill">Nível ${level}</span>
           <span class="xp-label">XP: ${xp} / ${xpToNext}</span>
         </div>
         <div class="xp-bar-track">
@@ -181,7 +184,6 @@ export class ModalManager {
   renderStats(payload, onAllocateStat = null) {
     const stats = payload?.stats ?? payload;
     const progression = payload?.progression;
-    const health = payload?.health;
 
     if (!stats || Object.keys(stats).length === 0) {
       this.elements.statsContent.innerHTML = '<p>Nenhum atributo registrado.</p>';
@@ -189,7 +191,7 @@ export class ModalManager {
     }
 
     const pendingPoints = progression?.pendingStatPoints ?? 0;
-    const headerHtml = progression ? this.renderProgressionHeader(progression, health) : '';
+    const headerHtml = progression ? this.renderProgressionHeader(progression) : '';
 
     const rowsHtml = Object.entries(stats)
       .map(([stat, value]) => {
@@ -239,6 +241,7 @@ export class ModalManager {
       .map((item, idx) => {
         const meta = LootSystem.getItemMetadata(item);
         const isConsumable = meta?.type === 'consumable';
+        const desc = meta?.description || 'Item de aventura';
         const useBtn = isConsumable
           ? `<button class="use-item-btn" data-item-index="${idx}">Usar</button>`
           : '';
@@ -247,7 +250,7 @@ export class ModalManager {
           <div class="inventory-item">
             <div class="inventory-item-info">
               <span>🎒 ${item}</span>
-              <small class="inventory-item-desc">${meta?.description || ''}</small>
+              <small class="inventory-item-desc">${desc}</small>
             </div>
             ${useBtn}
           </div>
@@ -258,22 +261,107 @@ export class ModalManager {
     if (onUseItem) {
       this.elements.inventoryContent.querySelectorAll('.use-item-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const index = Number(btn.getAttribute('data-item-index'));
-          onUseItem(index);
+          const idx = Number(btn.getAttribute('data-item-index'));
+          onUseItem(idx);
         });
       });
     }
   }
 
-  renderJournal(history) {
-    if (!history || history.length === 0) {
+  normalizeJournalItems(history) {
+    if (!Array.isArray(history)) return [];
+    return history.map((entry, idx) => {
+      if (typeof entry === 'string') {
+        const match = entry.match(/^\[([^\]]+)\]\s*(.*)$/);
+        const prefix = match ? match[1] : 'Jornada';
+        const msg = match ? match[2] : entry;
+        const parts = prefix.split('•').map((p) => p.trim());
+        const questTitle = parts.length > 1 ? parts[0] : 'Quest';
+        const displayText = parts.length > 1 ? `[${parts.slice(1).join(' • ')}] ${msg}` : entry;
+        return { index: idx + 1, questTitle, text: displayText };
+      }
+
+      const questTitle = entry?.questTitle || 'Quest';
+      const chapterTitle = entry?.chapterTitle || 'Jornada';
+      const msg = entry?.message ?? entry?.text ?? '';
+      const text = entry?.text || `[${chapterTitle}] ${msg}`;
+      return { index: idx + 1, questTitle, text };
+    });
+  }
+
+  renderJournal(payload) {
+    const rawHistory = Array.isArray(payload) ? payload : (payload?.history || []);
+    const quests = Array.isArray(payload?.quests) ? payload.quests : [];
+    const items = this.normalizeJournalItems(rawHistory);
+
+    if (items.length === 0) {
+      this.selectedJournalQuest = 'ALL';
       this.elements.journalContent.innerHTML = '<p>Nenhum registro no diário ainda.</p>';
       return;
     }
 
-    this.elements.journalContent.innerHTML = history
-      .map((text, idx) => `<div class="journal-entry"><strong>#${idx + 1}</strong><br>${text}</div>`)
+    const questOrder = [];
+    quests.forEach((q) => {
+      if (q?.title && !questOrder.includes(q.title)) {
+        questOrder.push(q.title);
+      }
+    });
+    items.forEach((item) => {
+      if (!questOrder.includes(item.questTitle)) {
+        questOrder.push(item.questTitle);
+      }
+    });
+
+    if (this.selectedJournalQuest !== 'ALL' && !questOrder.includes(this.selectedJournalQuest)) {
+      this.selectedJournalQuest = 'ALL';
+    }
+
+    const filterButtonsHtml = [
+      `<button class="journal-filter-pill ${this.selectedJournalQuest === 'ALL' ? 'active' : ''}" data-quest="ALL">Todas (${items.length})</button>`,
+      ...questOrder.map((qTitle, i) => {
+        const count = items.filter((it) => it.questTitle === qTitle).length;
+        const isActive = this.selectedJournalQuest === qTitle;
+        return `<button class="journal-filter-pill ${isActive ? 'active' : ''}" data-quest="${encodeURIComponent(qTitle)}">Quest ${i + 1} (${count})</button>`;
+      })
+    ].join('');
+
+    const visibleQuests = this.selectedJournalQuest === 'ALL'
+      ? questOrder
+      : questOrder.filter((qTitle) => qTitle === this.selectedJournalQuest);
+
+    const groupsHtml = visibleQuests
+      .map((qTitle) => {
+        const qItems = items.filter((it) => it.questTitle === qTitle);
+        if (!qItems.length) return '';
+
+        const entriesHtml = qItems
+          .map((it) => `<div class="journal-entry"><strong>#${it.index}</strong><br>${it.text}</div>`)
+          .join('');
+
+        return `
+          <section class="journal-quest-group">
+            <div class="journal-quest-header">
+              <h3 class="journal-quest-title">⚔️ ${qTitle}</h3>
+              <span class="journal-quest-count">${qItems.length} ${qItems.length === 1 ? 'nota' : 'notas'}</span>
+            </div>
+            <div class="journal-quest-entries">${entriesHtml}</div>
+          </section>
+        `;
+      })
       .join('');
+
+    this.elements.journalContent.innerHTML = `
+      <div class="journal-filter-bar">${filterButtonsHtml}</div>
+      <div class="journal-groups">${groupsHtml}</div>
+    `;
+
+    this.elements.journalContent.querySelectorAll('.journal-filter-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const rawVal = btn.getAttribute('data-quest');
+        this.selectedJournalQuest = rawVal === 'ALL' ? 'ALL' : decodeURIComponent(rawVal);
+        this.renderJournal({ history: rawHistory, quests });
+      });
+    });
   }
 
   toggle(modalName, show, data = null, actionCallback = null) {

@@ -34,6 +34,46 @@ export class GameEngine {
     };
   }
 
+  normalizeHistoryEntries(rawHistory) {
+    if (!Array.isArray(rawHistory)) return [];
+    const fallbackQuest = this.getCurrentQuest()?.title || 'Quest I';
+
+    return rawHistory.map((entry) => {
+      if (typeof entry === 'string') {
+        const match = entry.match(/^\[([^\]]+)\]\s*(.*)$/);
+        if (match) {
+          const prefix = match[1];
+          const msg = match[2] || '';
+          const parts = prefix.split('•').map((p) => p.trim());
+          const questTitle = parts.length > 1 ? parts[0] : fallbackQuest;
+          const chapterTitle = parts.length > 1 ? parts.slice(1).join(' • ') : prefix;
+          return {
+            questTitle,
+            chapterTitle,
+            message: msg,
+            text: `[${chapterTitle}] ${msg}`
+          };
+        }
+        return {
+          questTitle: fallbackQuest,
+          chapterTitle: 'Jornada',
+          message: entry,
+          text: entry
+        };
+      }
+
+      const questTitle = entry?.questTitle || fallbackQuest;
+      const chapterTitle = entry?.chapterTitle || 'Jornada';
+      const message = entry?.message ?? entry?.text ?? '';
+      return {
+        questTitle,
+        chapterTitle,
+        message,
+        text: entry?.text || `[${chapterTitle}] ${message}`
+      };
+    });
+  }
+
   getBookQuests(book = this.currentBook) {
     if (!book) return [];
     if (Array.isArray(book.quests) && book.quests.length > 0) {
@@ -94,7 +134,7 @@ export class GameEngine {
       stats,
       health,
       progression: mergedProgression,
-      history: Array.isArray(savedState?.history) ? savedState.history : []
+      history: this.normalizeHistoryEntries(savedState?.history)
     };
 
     if (this.currentBook) {
@@ -223,8 +263,9 @@ export class GameEngine {
     }
 
     this.recordLog(
-      `${quest.title} • ${chapter.title}`,
-      `Você viajou para ${location.name} (${location.region}).`
+      chapter.title,
+      `Você viajou para ${location.name} (${location.region}).`,
+      quest.title
     );
     return this.moveToBlock(targetBlockId);
   }
@@ -266,7 +307,7 @@ export class GameEngine {
     }
 
     const targetBlockId = blockId || chapter.startBlock;
-    this.recordLog(quest.title, `Quest iniciada: ${quest.title}.`);
+    this.recordLog(chapter.title, `Quest iniciada: ${quest.title}.`, quest.title);
     return this.moveToBlock(targetBlockId);
   }
 
@@ -293,17 +334,30 @@ export class GameEngine {
     return this.moveToBlock(blockId || matchingLoc?.blockId || chapter.startBlock);
   }
 
-  recordLog(chapterTitle, message) {
-    const logEntry = `[${chapterTitle}] ${message}`;
-    if (this.state.history[this.state.history.length - 1] !== logEntry) {
-      this.state.history.push(logEntry);
+  recordLog(chapterTitle, message, questTitle = null) {
+    const resolvedQuest = questTitle || this.getCurrentQuest()?.title || 'Quest';
+    const resolvedChapter = chapterTitle || this.getCurrentChapter()?.title || 'Jornada';
+    const formattedText = `[${resolvedChapter}] ${message}`;
+    const lastEntry = this.state.history[this.state.history.length - 1];
+
+    const newEntry = {
+      questTitle: resolvedQuest,
+      chapterTitle: resolvedChapter,
+      message,
+      text: formattedText
+    };
+
+    const lastText = typeof lastEntry === 'string' ? lastEntry : lastEntry?.text;
+    const lastQuest = typeof lastEntry === 'string' ? null : lastEntry?.questTitle;
+
+    if (lastText !== formattedText || lastQuest !== resolvedQuest) {
+      this.state.history.push(newEntry);
     }
   }
 
   grantLootFromSource(source, shouldSave = false) {
     const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
-    const contextLabel = `${questTitle} • ${chapterTitle}`;
     const rolledItems = LootSystem.collectSourceLoot(source);
     const added = [];
 
@@ -317,7 +371,7 @@ export class GameEngine {
     }
 
     if (added.length > 0) {
-      this.recordLog(contextLabel, `Saque obtido: ${added.join(', ')}.`);
+      this.recordLog(chapterTitle, `Saque obtido: ${added.join(', ')}.`, questTitle);
     }
 
     if (shouldSave) {
@@ -351,7 +405,7 @@ export class GameEngine {
 
     const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
-    this.recordLog(`${questTitle} • ${chapterTitle}`, `Você usou ${itemName}.`);
+    this.recordLog(chapterTitle, `Você usou ${itemName}.`, questTitle);
     this.saveProgress();
 
     return { itemName, meta };
@@ -377,7 +431,6 @@ export class GameEngine {
   applyHpChange(delta, reason = '', shouldSave = true) {
     const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
-    const contextLabel = `${questTitle} • ${chapterTitle}`;
     const res = CombatSystem.modifyHp(
       this.state.health,
       delta,
@@ -389,10 +442,10 @@ export class GameEngine {
     if (res.actualChange < 0) {
       const lost = Math.abs(res.actualChange);
       const suffix = reason ? ` (${reason})` : '';
-      this.recordLog(contextLabel, `Você sofreu ${lost} de dano${suffix}. HP: ${res.hp}/${res.maxHp}.`);
+      this.recordLog(chapterTitle, `Você sofreu ${lost} de dano${suffix}. HP: ${res.hp}/${res.maxHp}.`, questTitle);
     } else if (res.actualChange > 0) {
       const suffix = reason ? ` (${reason})` : '';
-      this.recordLog(contextLabel, `Você recuperou ${res.actualChange} de HP${suffix}. HP: ${res.hp}/${res.maxHp}.`);
+      this.recordLog(chapterTitle, `Você recuperou ${res.actualChange} de HP${suffix}. HP: ${res.hp}/${res.maxHp}.`, questTitle);
     }
 
     if (shouldSave) {
@@ -410,8 +463,9 @@ export class GameEngine {
       this.state.progression?.level ?? 1
     );
     this.recordLog(
-      `${questTitle} • ${chapterTitle}`,
-      `Vida totalmente restaurada (${reason}). HP: ${this.state.health.hp}/${this.state.health.maxHp}.`
+      chapterTitle,
+      `Vida totalmente restaurada (${reason}). HP: ${this.state.health.hp}/${this.state.health.maxHp}.`,
+      questTitle
     );
     if (shouldSave) {
       this.saveProgress();
@@ -422,18 +476,18 @@ export class GameEngine {
   gainExperience(amount, shouldSave = true) {
     const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
-    const contextLabel = `${questTitle} • ${chapterTitle}`;
     const result = ProgressionSystem.grantXp(this.state.progression, this.state.stats, amount);
 
     if (result.gained > 0) {
-      this.recordLog(contextLabel, `Você recebeu +${result.gained} de XP.`);
+      this.recordLog(chapterTitle, `Você recebeu +${result.gained} de XP.`, questTitle);
     }
 
     if (result.leveledUpCount > 0) {
       this.syncHealth(result.leveledUpCount * 10, false);
       this.recordLog(
-        contextLabel,
-        `Subiu para o Nível ${result.newLevel}! (+${result.pointsAwarded} pontos de atributo e +${result.leveledUpCount * 10} de vitalidade)`
+        chapterTitle,
+        `Subiu para o Nível ${result.newLevel}! (+${result.pointsAwarded} pontos de atributo e +${result.leveledUpCount * 10} de vitalidade)`,
+        questTitle
       );
     }
 
@@ -470,8 +524,9 @@ export class GameEngine {
     const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Combate';
     this.recordLog(
-      `${questTitle} • ${chapterTitle}`,
-      `Combate iniciado contra ${enemy.name} (HP: ${enemy.hp}/${enemy.maxHp}).`
+      chapterTitle,
+      `Combate iniciado contra ${enemy.name} (HP: ${enemy.hp}/${enemy.maxHp}).`,
+      questTitle
     );
     return this.activeCombat;
   }
@@ -521,7 +576,7 @@ export class GameEngine {
       this.applyHpChange(hpDelta, '', false);
     }
 
-    this.recordLog(`${quest?.title || 'Quest'} • ${chapter.title}`, block.content);
+    this.recordLog(chapter.title, block.content, quest?.title || 'Quest');
 
     const blockXp = block.giveXp ?? block.xp ?? 0;
     if (blockXp > 0) {

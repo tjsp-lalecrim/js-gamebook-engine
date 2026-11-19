@@ -498,12 +498,16 @@ ui.elements.closeInventoryBtn.addEventListener('click', () => {
 
 ui.elements.journalBtn.addEventListener('click', () => {
   playSound('click');
-  ui.modals.toggle('journal', true, engine.state.history);
+  ui.modals.toggle('journal', true, {
+    history: engine.state.history,
+    quests: engine.getBookQuests()
+  });
 });
 ui.elements.closeJournalBtn.addEventListener('click', () => {
   playSound('click');
   ui.modals.toggle('journal', false);
 });
+
 
 // Inicialização
 init();

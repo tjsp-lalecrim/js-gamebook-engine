@@ -1,5 +1,6 @@
 import { DiceSystem } from './dice.js';
 import { ProgressionSystem } from './progression.js';
+import { WorldMapSystem } from './world.js';
 
 const SAVE_PREFIX = 'livro_jogo_cap_save_';
 
@@ -15,6 +16,8 @@ export class GameEngine {
     return {
       chapterIndex: 0,
       unlockedChapter: 0,
+      locationId: null,
+      visitedLocations: [],
       blockId: null,
       inventory: [],
       stats: {},
@@ -31,14 +34,25 @@ export class GameEngine {
     };
     mergedProgression.xpToNextLevel = ProgressionSystem.getXpForNextLevel(mergedProgression.level);
 
-    return {
+    const normalized = {
       ...base,
       ...savedState,
+      visitedLocations: Array.isArray(savedState?.visitedLocations) ? savedState.visitedLocations : [],
       inventory: Array.isArray(savedState?.inventory) ? savedState.inventory : [],
       stats: savedState?.stats || {},
       progression: mergedProgression,
       history: Array.isArray(savedState?.history) ? savedState.history : []
     };
+
+    if (this.currentBook) {
+      const resolvedLoc = WorldMapSystem.resolveCurrentLocationId(this.currentBook, normalized);
+      normalized.locationId = resolvedLoc;
+      if (resolvedLoc && !normalized.visitedLocations.includes(resolvedLoc)) {
+        normalized.visitedLocations.push(resolvedLoc);
+      }
+    }
+
+    return normalized;
   }
 
   async loadGameData() {
@@ -79,10 +93,14 @@ export class GameEngine {
       return this.state;
     }
 
+    const startLoc = WorldMapSystem.getBookLocations(book)[0] || null;
+
     this.state = {
       chapterIndex: 0,
       unlockedChapter: 0,
-      blockId: book.chapters[0].startBlock,
+      locationId: startLoc ? startLoc.id : null,
+      visitedLocations: startLoc ? [startLoc.id] : [],
+      blockId: startLoc?.blockId || book.chapters[0].startBlock,
       inventory: [],
       stats: this.buildInitialStats(book),
       progression: ProgressionSystem.createInitialProgression(),
@@ -91,6 +109,47 @@ export class GameEngine {
 
     this.moveToBlock(this.state.blockId);
     return this.state;
+  }
+
+  getLocations() {
+    if (!this.currentBook) return [];
+    return WorldMapSystem.getBookLocations(this.currentBook);
+  }
+
+  getCurrentLocation() {
+    if (!this.currentBook) return null;
+    const locId = WorldMapSystem.resolveCurrentLocationId(this.currentBook, this.state);
+    this.state.locationId = locId;
+    return WorldMapSystem.getLocationById(this.currentBook, locId);
+  }
+
+  travelToLocation(locationId) {
+    if (!this.currentBook) return null;
+    const location = WorldMapSystem.getLocationById(this.currentBook, locationId);
+    if (!location) return null;
+
+    const availability = WorldMapSystem.evaluateTravelAvailability(location, this.state);
+    if (!availability.canTravel) return null;
+
+    const targetChapterIdx = location.chapterIndex ?? this.state.chapterIndex;
+    const chapter = this.currentBook.chapters[targetChapterIdx];
+    if (!chapter) return null;
+
+    const targetBlockId = location.blockId || chapter.startBlock;
+    if (!chapter.blocks?.[targetBlockId]) return null;
+
+    this.state.chapterIndex = targetChapterIdx;
+    if (targetChapterIdx > this.state.unlockedChapter) {
+      this.state.unlockedChapter = targetChapterIdx;
+    }
+
+    this.state.locationId = location.id;
+    if (!this.state.visitedLocations.includes(location.id)) {
+      this.state.visitedLocations.push(location.id);
+    }
+
+    this.recordLog(chapter.title, `Você viajou para ${location.name} (${location.region}).`);
+    return this.moveToBlock(targetBlockId);
   }
 
   getCurrentChapter() {
@@ -109,8 +168,17 @@ export class GameEngine {
     if (index > this.state.unlockedChapter) {
       this.state.unlockedChapter = index;
     }
+
+    const matchingLoc = this.getLocations().find((loc) => loc.chapterIndex === index);
+    if (matchingLoc) {
+      this.state.locationId = matchingLoc.id;
+      if (!this.state.visitedLocations.includes(matchingLoc.id)) {
+        this.state.visitedLocations.push(matchingLoc.id);
+      }
+    }
+
     const chapter = this.getCurrentChapter();
-    return this.moveToBlock(chapter.startBlock);
+    return this.moveToBlock(matchingLoc?.blockId || chapter.startBlock);
   }
 
   recordLog(chapterTitle, message) {
@@ -162,6 +230,16 @@ export class GameEngine {
 
     this.state.blockId = blockId;
 
+    const matchingLoc = this.getLocations().find(
+      (loc) => loc.chapterIndex === this.state.chapterIndex && loc.blockId === blockId
+    );
+    if (matchingLoc) {
+      this.state.locationId = matchingLoc.id;
+      if (!this.state.visitedLocations.includes(matchingLoc.id)) {
+        this.state.visitedLocations.push(matchingLoc.id);
+      }
+    }
+
     if (block.giveItem && !this.state.inventory.includes(block.giveItem)) {
       this.state.inventory.push(block.giveItem);
     }
@@ -207,10 +285,14 @@ export class GameEngine {
     if (!this.currentBook) return null;
     localStorage.removeItem(SAVE_PREFIX + this.currentBook.id);
 
+    const startLoc = this.getLocations()[0] || null;
+
     this.state = {
       chapterIndex: 0,
       unlockedChapter: 0,
-      blockId: this.currentBook.chapters[0].startBlock,
+      locationId: startLoc ? startLoc.id : null,
+      visitedLocations: startLoc ? [startLoc.id] : [],
+      blockId: startLoc?.blockId || this.currentBook.chapters[0].startBlock,
       inventory: [],
       stats: this.buildInitialStats(this.currentBook),
       progression: ProgressionSystem.createInitialProgression(),

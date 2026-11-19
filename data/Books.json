@@ -8,6 +8,35 @@
       "agilidade": 55,
       "inteligencia": 50
     },
+    "locations": [
+      {
+        "id": "masmorras-imperiais",
+        "name": "Masmorras Imperiais",
+        "region": "Cyrodiil • Cidade Imperial",
+        "description": "Celas úmidas e corredores vigiados sob o Palácio Imperial onde sua fuga começa.",
+        "chapterIndex": 0,
+        "blockId": "cela_inicio",
+        "requiredChapter": 0
+      },
+      {
+        "id": "labirinto-cristal",
+        "name": "Labirinto de Cristal",
+        "region": "Skyrim • Montanhas do Norte",
+        "description": "Ruínas antigas cobertas de gelo e runas arcanas onde repousa um fragmento do Cajado do Caos.",
+        "chapterIndex": 1,
+        "blockId": "entrada_ruinas",
+        "requiredChapter": 1
+      },
+      {
+        "id": "salao-do-trono",
+        "name": "Salão do Trono",
+        "region": "Cyrodiil • Palácio Imperial",
+        "description": "O coração do Império, onde Jagar Tharn mantém sua ilusão e aguarda o confronto final.",
+        "chapterIndex": 2,
+        "blockId": "palacio_portoes",
+        "requiredChapter": 2
+      }
+    ],
     "chapters": [
       {
         "id": "cap-1",
@@ -86,7 +115,8 @@
             "content": "Ria Silmane abre um portal dimensional que leva às províncias externas de Tamriel. Você sobreviveu às masmorras!",
             "giveXp": 60,
             "options": [
-              { "text": "Avançar para o Capítulo II →", "nextChapter": 1 }
+              { "text": "Avançar para o Capítulo II →", "nextChapter": 1 },
+              { "text": "Abrir o Mapa-Mundi e escolher destino 🗺️", "openMap": true }
             ]
           }
         }
@@ -134,7 +164,8 @@
             "giveItem": "Fragmento do Cajado (1/8)",
             "giveXp": 80,
             "options": [
-              { "text": "Avançar para o Capítulo III →", "nextChapter": 2 }
+              { "text": "Avançar para o Capítulo III →", "nextChapter": 2 },
+              { "text": "Consultar o Mapa-Mundi 🗺️", "openMap": true }
             ]
           },
           "fim_congelado": {

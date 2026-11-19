@@ -18,6 +18,8 @@ export class UIManager {
       backBtn: document.getElementById('back-btn'),
       audioToggleBtn: document.getElementById('audio-toggle-btn'),
 
+      mapBtn: document.getElementById('map-btn'),
+      closeMapBtn: document.getElementById('close-map-btn'),
       statsBtn: document.getElementById('stats-btn'),
       closeStatsBtn: document.getElementById('close-stats-btn'),
       inventoryBtn: document.getElementById('inventory-btn'),
@@ -57,9 +59,10 @@ export class UIManager {
     });
   }
 
-  renderHeader(bookTitle, chapterTitle) {
+  renderHeader(bookTitle, chapterTitle, location = null) {
     this.elements.title.textContent = bookTitle;
-    this.elements.chapterTitle.textContent = chapterTitle;
+    const locSuffix = location ? ` • 📍 ${location.name}` : '';
+    this.elements.chapterTitle.textContent = `${chapterTitle}${locSuffix}`;
   }
 
   renderStatsButtonBadge(progression) {

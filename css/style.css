@@ -176,6 +176,10 @@ h1 {
   flex-direction: column;
 }
 
+.map-modal-content {
+  max-width: 560px;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -225,6 +229,105 @@ h1 {
 
 .chapter-pill:disabled {
   opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Mapa-Mundi */
+.location-card {
+  background-color: #1f1c1a;
+  border: 1px solid #4d4642;
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.location-card.is-current {
+  border-color: #d4a359;
+  background-color: rgba(212, 163, 89, 0.08);
+}
+
+.location-card.is-locked {
+  opacity: 0.72;
+}
+
+.location-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.location-region {
+  font-size: 0.78rem;
+  color: #a89f99;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.location-name {
+  font-size: 1.05rem;
+  color: #d4a359;
+}
+
+.location-desc {
+  font-size: 0.9rem;
+  color: #e8e2d5;
+}
+
+.loc-tag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.loc-tag.current {
+  background-color: #d4a359;
+  color: #1a1817;
+}
+
+.loc-tag.visited {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+  border: 1px solid rgba(76, 175, 80, 0.45);
+}
+
+.loc-tag.unvisited {
+  background-color: #332f2c;
+  color: #a89f99;
+  border: 1px solid #4d4642;
+}
+
+.loc-lock-reason {
+  font-size: 0.82rem;
+  color: #e57373;
+}
+
+.travel-btn {
+  margin-top: 0.25rem;
+  background-color: #332f2c;
+  color: #e8e2d5;
+  border: 1px solid #d4a359;
+  border-radius: 4px;
+  padding: 0.5rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.travel-btn:hover:not(:disabled) {
+  background-color: #d4a359;
+  color: #1a1817;
+  font-weight: bold;
+}
+
+.travel-btn:disabled {
+  opacity: 0.45;
+  border-color: #4d4642;
   cursor: not-allowed;
 }
 

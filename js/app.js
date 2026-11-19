@@ -28,12 +28,34 @@ function syncHudBadges() {
   ui.renderStatsButtonBadge(engine.state.progression);
 }
 
+function openWorldMapModal() {
+  const currentLoc = engine.getCurrentLocation();
+  ui.modals.toggle(
+    'map',
+    true,
+    {
+      locations: engine.getLocations(),
+      currentLocationId: currentLoc ? currentLoc.id : null,
+      state: engine.state
+    },
+    (targetLocationId) => {
+      playSound('click');
+      const moved = engine.travelToLocation(targetLocationId);
+      if (moved) {
+        playSound('success');
+        loadCurrentBlock();
+      }
+    }
+  );
+}
+
 function loadCurrentBlock() {
   const chapter = engine.getCurrentChapter();
   const block = engine.getCurrentBlock();
   if (!block) return;
 
-  ui.renderHeader(engine.currentBook.title, chapter.title);
+  const currentLoc = engine.getCurrentLocation();
+  ui.renderHeader(engine.currentBook.title, chapter.title, currentLoc);
   ui.renderChapterNav(
     engine.currentBook.chapters,
     engine.state.chapterIndex,
@@ -64,6 +86,21 @@ function applyOptionXp(option, shouldSave = true) {
 
 function handleOptionSelect(option) {
   playSound('click');
+
+  if (option.openMap) {
+    openWorldMapModal();
+    return;
+  }
+
+  if (option.travelToLocation) {
+    if (option.gainStats) engine.applyStatChanges(option.gainStats, false);
+    applyOptionXp(option, false);
+    const moved = engine.travelToLocation(option.travelToLocation);
+    if (moved) {
+      loadCurrentBlock();
+    }
+    return;
+  }
 
   if (option.nextChapter !== undefined) {
     if (option.gainStats) engine.applyStatChanges(option.gainStats, false);
@@ -160,6 +197,15 @@ ui.elements.backBtn.addEventListener('click', () => {
 });
 
 // Eventos dos Modais
+ui.elements.mapBtn.addEventListener('click', () => {
+  playSound('click');
+  openWorldMapModal();
+});
+ui.elements.closeMapBtn.addEventListener('click', () => {
+  playSound('click');
+  ui.modals.toggle('map', false);
+});
+
 ui.elements.statsBtn.addEventListener('click', () => {
   playSound('click');
   ui.modals.toggle('stats', true, {

@@ -1,8 +1,12 @@
 import { DiceSystem } from './dice.js';
+import { WorldMapSystem } from './world.js';
 
 export class ModalManager {
   constructor() {
     this.elements = {
+      mapModal: document.getElementById('map-modal'),
+      mapContent: document.getElementById('map-content'),
+
       statsModal: document.getElementById('stats-modal'),
       statsContent: document.getElementById('stats-content'),
 
@@ -25,6 +29,71 @@ export class ModalManager {
 
   formatModifier(mod) {
     return mod >= 0 ? `+${mod}` : `${mod}`;
+  }
+
+  renderWorldMap(payload, onTravel = null) {
+    const locations = payload?.locations || [];
+    const currentLocationId = payload?.currentLocationId || null;
+    const state = payload?.state || {};
+    const visited = Array.isArray(state?.visitedLocations) ? state.visitedLocations : [];
+
+    if (!locations.length) {
+      this.elements.mapContent.innerHTML = '<p>Nenhum local disponível neste mapa.</p>';
+      return;
+    }
+
+    this.elements.mapContent.innerHTML = locations
+      .map((loc) => {
+        const isCurrent = loc.id === currentLocationId;
+        const isVisited = visited.includes(loc.id);
+        const availability = WorldMapSystem.evaluateTravelAvailability(loc, state);
+
+        let statusBadge = isVisited
+          ? '<span class="loc-tag visited">Visitado</span>'
+          : '<span class="loc-tag unvisited">Inexplorado</span>';
+
+        if (isCurrent) {
+          statusBadge = '<span class="loc-tag current">📍 Local Atual</span>';
+        }
+
+        const lockNote = !availability.canTravel && availability.reason
+          ? `<div class="loc-lock-reason">🔒 ${availability.reason}</div>`
+          : '';
+
+        const btnLabel = isCurrent
+          ? 'Você está aqui'
+          : availability.canTravel
+            ? `Viajar para ${loc.name}`
+            : 'Bloqueado';
+
+        const disabledAttr = isCurrent || !availability.canTravel ? 'disabled' : '';
+
+        return `
+          <div class="location-card ${isCurrent ? 'is-current' : ''} ${!availability.canTravel ? 'is-locked' : ''}">
+            <div class="location-top">
+              <div>
+                <div class="location-region">${loc.region || 'Tamriel'}</div>
+                <h3 class="location-name">${loc.name}</h3>
+              </div>
+              ${statusBadge}
+            </div>
+            <p class="location-desc">${loc.description || ''}</p>
+            ${lockNote}
+            <button class="travel-btn" data-location-id="${loc.id}" ${disabledAttr}>${btnLabel}</button>
+          </div>
+        `;
+      })
+      .join('');
+
+    if (onTravel) {
+      this.elements.mapContent.querySelectorAll('.travel-btn:not(:disabled)').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const locId = btn.getAttribute('data-location-id');
+          this.toggle('map', false);
+          onTravel(locId);
+        });
+      });
+    }
   }
 
   renderProgressionHeader(progression) {
@@ -123,9 +192,12 @@ export class ModalManager {
       .join('');
   }
 
-  toggle(modalName, show, data = null, onAllocateStat = null) {
-    if (modalName === 'stats') {
-      if (show) this.renderStats(data, onAllocateStat);
+  toggle(modalName, show, data = null, actionCallback = null) {
+    if (modalName === 'map') {
+      if (show) this.renderWorldMap(data, actionCallback);
+      this.elements.mapModal.classList.toggle('hidden', !show);
+    } else if (modalName === 'stats') {
+      if (show) this.renderStats(data, actionCallback);
       this.elements.statsModal.classList.toggle('hidden', !show);
     } else if (modalName === 'inventory') {
       if (show) this.renderInventory(data);

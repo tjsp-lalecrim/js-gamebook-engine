@@ -34,6 +34,7 @@
 
       <!-- BOTÕES DE ACESSO RÁPIDO (MODAIS) -->
       <div class="game-top-actions">
+        <button id="map-btn" class="nav-btn action-pill">🗺️ Mapa</button>
         <button id="stats-btn" class="nav-btn action-pill">📊 Atributos</button>
         <button id="inventory-btn" class="nav-btn action-pill">🎒 Mochila <span id="inv-count" class="badge-count">0</span></button>
         <button id="journal-btn" class="nav-btn action-pill">📜 Diário</button>
@@ -46,6 +47,19 @@
       <p id="story-text" class="story-text" title="Clique para pular a digitação"></p>
       <div id="options-container" class="options-container"></div>
     </section>
+
+    <!-- MODAL DO MAPA-MUNDI -->
+    <div id="map-modal" class="modal hidden">
+      <div class="modal-content map-modal-content">
+        <header class="modal-header">
+          <h2>Mapa-Mundi de Tamriel</h2>
+          <button id="close-map-btn" class="nav-btn">✕</button>
+        </header>
+        <div id="map-content" class="modal-list-content">
+          <!-- Preenchido via JS -->
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL DE ATRIBUTOS -->
     <div id="stats-modal" class="modal hidden">

@@ -11,6 +11,7 @@ export class UIManager {
       booksList: document.getElementById('books-list'),
       title: document.getElementById('book-title'),
       chapterTitle: document.getElementById('chapter-title'),
+      questNav: document.getElementById('quest-nav'),
       chapterNav: document.getElementById('chapter-nav'),
       hpHudText: document.getElementById('hp-hud-text'),
       hpBarFill: document.getElementById('hp-bar-fill'),
@@ -49,23 +50,30 @@ export class UIManager {
   renderLibraryList(books, onSelectBook) {
     this.elements.booksList.innerHTML = '';
     books.forEach(book => {
-      const totalChapters = book.chapters ? book.chapters.length : 1;
+      const questsCount = Array.isArray(book.quests) && book.quests.length > 0
+        ? book.quests.length
+        : 1;
+      const chaptersCount = Array.isArray(book.quests) && book.quests.length > 0
+        ? book.quests.reduce((acc, q) => acc + (q.chapters?.length || 0), 0)
+        : (book.chapters?.length || 1);
+
       const card = document.createElement('div');
       card.className = 'book-card';
       card.innerHTML = `
         <h2>${book.title}</h2>
         <p>${book.description || ''}</p>
-        <small class="book-chapters-count">${totalChapters} Capítulos</small>
+        <small class="book-chapters-count">${questsCount} Quests • ${chaptersCount} Capítulos</small>
       `;
       card.addEventListener('click', () => onSelectBook(book));
       this.elements.booksList.appendChild(card);
     });
   }
 
-  renderHeader(bookTitle, chapterTitle, location = null) {
+  renderHeader(bookTitle, questTitle, chapterTitle, location = null) {
     this.elements.title.textContent = bookTitle;
     const locSuffix = location ? ` • 📍 ${location.name}` : '';
-    this.elements.chapterTitle.textContent = `${chapterTitle}${locSuffix}`;
+    const questPrefix = questTitle ? `${questTitle} • ` : '';
+    this.elements.chapterTitle.textContent = `${questPrefix}${chapterTitle}${locSuffix}`;
   }
 
   renderHealthHud(health) {
@@ -83,6 +91,25 @@ export class UIManager {
     const pending = progression?.pendingStatPoints ?? 0;
     const alertSuffix = pending > 0 ? ` ✨+${pending}` : '';
     this.elements.statsBtn.innerHTML = `📊 Atributos <span class="badge-count">Nv.${level}${alertSuffix}</span>`;
+  }
+
+  renderQuestNav(quests, currentIndex, unlockedIndex, onSelectQuest) {
+    this.elements.questNav.innerHTML = '';
+    quests.forEach((quest, idx) => {
+      const pill = document.createElement('button');
+      pill.className = `quest-pill ${idx === currentIndex ? 'active' : ''}`;
+      const isLocked = idx > unlockedIndex;
+      pill.disabled = isLocked;
+      pill.textContent = isLocked ? `🔒 Quest ${idx + 1}` : `⚔️ Quest ${idx + 1}`;
+      pill.title = quest.title;
+
+      if (!isLocked) {
+        pill.addEventListener('click', () => {
+          if (idx !== currentIndex) onSelectQuest(idx);
+        });
+      }
+      this.elements.questNav.appendChild(pill);
+    });
   }
 
   renderChapterNav(chapters, currentIndex, unlockedIndex, onSelectChapter) {

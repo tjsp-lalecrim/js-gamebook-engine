@@ -19,6 +19,8 @@ export class GameEngine {
     const initialStats = {};
     const initialProgression = ProgressionSystem.createInitialProgression();
     return {
+      questIndex: 0,
+      unlockedQuest: 0,
       chapterIndex: 0,
       unlockedChapter: 0,
       locationId: null,
@@ -30,6 +32,31 @@ export class GameEngine {
       progression: initialProgression,
       history: []
     };
+  }
+
+  getBookQuests(book = this.currentBook) {
+    if (!book) return [];
+    if (Array.isArray(book.quests) && book.quests.length > 0) {
+      return book.quests;
+    }
+    if (Array.isArray(book.chapters) && book.chapters.length > 0) {
+      return [
+        {
+          id: `${book.id || 'book'}-quest-1`,
+          title: book.title || 'Campanha Principal',
+          description: book.description || '',
+          startChapter: 0,
+          chapters: book.chapters
+        }
+      ];
+    }
+    return [];
+  }
+
+  getQuestChapters(questIndex = this.state.questIndex) {
+    const quests = this.getBookQuests();
+    const quest = quests[questIndex] || quests[0];
+    return Array.isArray(quest?.chapters) ? quest.chapters : [];
   }
 
   normalizeLoadedState(savedState) {
@@ -45,9 +72,23 @@ export class GameEngine {
       ? CombatSystem.syncMaxHp(savedState.health, stats, mergedProgression.level)
       : CombatSystem.createInitialHealth(stats, mergedProgression.level);
 
+    const quests = this.getBookQuests(this.currentBook);
+    const maxQuestIdx = Math.max(0, quests.length - 1);
+    const questIndex = Math.max(0, Math.min(maxQuestIdx, savedState?.questIndex ?? 0));
+    const unlockedQuest = Math.max(questIndex, Math.min(maxQuestIdx, savedState?.unlockedQuest ?? questIndex));
+
+    const chapters = this.getQuestChapters(questIndex);
+    const maxChapIdx = Math.max(0, chapters.length - 1);
+    const chapterIndex = Math.max(0, Math.min(maxChapIdx, savedState?.chapterIndex ?? 0));
+    const unlockedChapter = Math.max(chapterIndex, Math.min(maxChapIdx, savedState?.unlockedChapter ?? chapterIndex));
+
     const normalized = {
       ...base,
       ...savedState,
+      questIndex,
+      unlockedQuest,
+      chapterIndex,
+      unlockedChapter,
       visitedLocations: Array.isArray(savedState?.visitedLocations) ? savedState.visitedLocations : [],
       inventory: Array.isArray(savedState?.inventory) ? savedState.inventory : [],
       stats,
@@ -106,16 +147,22 @@ export class GameEngine {
       return this.state;
     }
 
+    const quests = this.getBookQuests(book);
+    const firstQuest = quests[0] || {};
+    const firstChapIdx = firstQuest.startChapter ?? 0;
+    const firstChapter = (firstQuest.chapters || [])[firstChapIdx] || (firstQuest.chapters || [])[0];
     const startLoc = WorldMapSystem.getBookLocations(book)[0] || null;
     const initialStats = this.buildInitialStats(book);
     const initialProgression = ProgressionSystem.createInitialProgression();
 
     this.state = {
-      chapterIndex: 0,
-      unlockedChapter: 0,
+      questIndex: 0,
+      unlockedQuest: 0,
+      chapterIndex: firstChapIdx,
+      unlockedChapter: firstChapIdx,
       locationId: startLoc ? startLoc.id : null,
       visitedLocations: startLoc ? [startLoc.id] : [],
-      blockId: startLoc?.blockId || book.chapters[0].startBlock,
+      blockId: firstChapter?.startBlock || startLoc?.blockId,
       inventory: [],
       stats: initialStats,
       health: CombatSystem.createInitialHealth(initialStats, initialProgression.level),
@@ -147,12 +194,23 @@ export class GameEngine {
     const availability = WorldMapSystem.evaluateTravelAvailability(location, this.state);
     if (!availability.canTravel) return null;
 
-    const targetChapterIdx = location.chapterIndex ?? this.state.chapterIndex;
-    const chapter = this.currentBook.chapters[targetChapterIdx];
+    const quests = this.getBookQuests();
+    const targetQuestIdx = location.questIndex ?? this.state.questIndex;
+    const quest = quests[targetQuestIdx];
+    if (!quest) return null;
+
+    const chapters = quest.chapters || [];
+    const targetChapterIdx = location.chapterIndex ?? (quest.startChapter ?? 0);
+    const chapter = chapters[targetChapterIdx];
     if (!chapter) return null;
 
     const targetBlockId = location.blockId || chapter.startBlock;
     if (!chapter.blocks?.[targetBlockId]) return null;
+
+    this.state.questIndex = targetQuestIdx;
+    if (targetQuestIdx > this.state.unlockedQuest) {
+      this.state.unlockedQuest = targetQuestIdx;
+    }
 
     this.state.chapterIndex = targetChapterIdx;
     if (targetChapterIdx > this.state.unlockedChapter) {
@@ -164,28 +222,67 @@ export class GameEngine {
       this.state.visitedLocations.push(location.id);
     }
 
-    this.recordLog(chapter.title, `Você viajou para ${location.name} (${location.region}).`);
+    this.recordLog(
+      `${quest.title} • ${chapter.title}`,
+      `Você viajou para ${location.name} (${location.region}).`
+    );
     return this.moveToBlock(targetBlockId);
   }
 
+  getCurrentQuest() {
+    const quests = this.getBookQuests();
+    return quests[this.state.questIndex] || null;
+  }
+
   getCurrentChapter() {
-    if (!this.currentBook) return null;
-    return this.currentBook.chapters[this.state.chapterIndex];
+    const chapters = this.getQuestChapters(this.state.questIndex);
+    return chapters[this.state.chapterIndex] || null;
   }
 
   getCurrentBlock() {
     const chapter = this.getCurrentChapter();
     if (!chapter) return null;
-    return chapter.blocks[this.state.blockId];
+    return chapter.blocks?.[this.state.blockId] || null;
   }
 
-  goToChapter(index) {
+  goToQuest(questIdx, chapterIdx = null, blockId = null) {
+    const quests = this.getBookQuests();
+    const quest = quests[questIdx];
+    if (!quest) return null;
+
+    this.state.questIndex = questIdx;
+    if (questIdx > this.state.unlockedQuest) {
+      this.state.unlockedQuest = questIdx;
+    }
+
+    const chapters = quest.chapters || [];
+    const targetChapIdx = chapterIdx !== null ? chapterIdx : (quest.startChapter ?? 0);
+    const chapter = chapters[targetChapIdx] || chapters[0];
+    if (!chapter) return null;
+
+    this.state.chapterIndex = Math.max(0, chapters.indexOf(chapter));
+    if (this.state.chapterIndex > this.state.unlockedChapter) {
+      this.state.unlockedChapter = this.state.chapterIndex;
+    }
+
+    const targetBlockId = blockId || chapter.startBlock;
+    this.recordLog(quest.title, `Quest iniciada: ${quest.title}.`);
+    return this.moveToBlock(targetBlockId);
+  }
+
+  goToChapter(index, blockId = null) {
+    const chapters = this.getQuestChapters(this.state.questIndex);
+    const chapter = chapters[index];
+    if (!chapter) return null;
+
     this.state.chapterIndex = index;
     if (index > this.state.unlockedChapter) {
       this.state.unlockedChapter = index;
     }
 
-    const matchingLoc = this.getLocations().find((loc) => loc.chapterIndex === index);
+    const matchingLoc = this.getLocations().find(
+      (loc) => (loc.questIndex ?? 0) === this.state.questIndex && loc.chapterIndex === index
+    );
     if (matchingLoc) {
       this.state.locationId = matchingLoc.id;
       if (!this.state.visitedLocations.includes(matchingLoc.id)) {
@@ -193,8 +290,7 @@ export class GameEngine {
       }
     }
 
-    const chapter = this.getCurrentChapter();
-    return this.moveToBlock(matchingLoc?.blockId || chapter.startBlock);
+    return this.moveToBlock(blockId || matchingLoc?.blockId || chapter.startBlock);
   }
 
   recordLog(chapterTitle, message) {
@@ -205,7 +301,9 @@ export class GameEngine {
   }
 
   grantLootFromSource(source, shouldSave = false) {
+    const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
+    const contextLabel = `${questTitle} • ${chapterTitle}`;
     const rolledItems = LootSystem.collectSourceLoot(source);
     const added = [];
 
@@ -219,7 +317,7 @@ export class GameEngine {
     }
 
     if (added.length > 0) {
-      this.recordLog(chapterTitle, `Saque obtido: ${added.join(', ')}.`);
+      this.recordLog(contextLabel, `Saque obtido: ${added.join(', ')}.`);
     }
 
     if (shouldSave) {
@@ -251,8 +349,9 @@ export class GameEngine {
       this.applyHpChange(meta.heal, itemName, false);
     }
 
+    const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
-    this.recordLog(chapterTitle, `Você usou ${itemName}.`);
+    this.recordLog(`${questTitle} • ${chapterTitle}`, `Você usou ${itemName}.`);
     this.saveProgress();
 
     return { itemName, meta };
@@ -276,7 +375,9 @@ export class GameEngine {
   }
 
   applyHpChange(delta, reason = '', shouldSave = true) {
+    const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
+    const contextLabel = `${questTitle} • ${chapterTitle}`;
     const res = CombatSystem.modifyHp(
       this.state.health,
       delta,
@@ -288,10 +389,10 @@ export class GameEngine {
     if (res.actualChange < 0) {
       const lost = Math.abs(res.actualChange);
       const suffix = reason ? ` (${reason})` : '';
-      this.recordLog(chapterTitle, `Você sofreu ${lost} de dano${suffix}. HP: ${res.hp}/${res.maxHp}.`);
+      this.recordLog(contextLabel, `Você sofreu ${lost} de dano${suffix}. HP: ${res.hp}/${res.maxHp}.`);
     } else if (res.actualChange > 0) {
       const suffix = reason ? ` (${reason})` : '';
-      this.recordLog(chapterTitle, `Você recuperou ${res.actualChange} de HP${suffix}. HP: ${res.hp}/${res.maxHp}.`);
+      this.recordLog(contextLabel, `Você recuperou ${res.actualChange} de HP${suffix}. HP: ${res.hp}/${res.maxHp}.`);
     }
 
     if (shouldSave) {
@@ -302,13 +403,14 @@ export class GameEngine {
   }
 
   restoreFullHealth(reason = 'Descanso', shouldSave = true) {
+    const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
     this.state.health = CombatSystem.healFull(
       this.state.stats,
       this.state.progression?.level ?? 1
     );
     this.recordLog(
-      chapterTitle,
+      `${questTitle} • ${chapterTitle}`,
       `Vida totalmente restaurada (${reason}). HP: ${this.state.health.hp}/${this.state.health.maxHp}.`
     );
     if (shouldSave) {
@@ -318,17 +420,19 @@ export class GameEngine {
   }
 
   gainExperience(amount, shouldSave = true) {
+    const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Jornada';
+    const contextLabel = `${questTitle} • ${chapterTitle}`;
     const result = ProgressionSystem.grantXp(this.state.progression, this.state.stats, amount);
 
     if (result.gained > 0) {
-      this.recordLog(chapterTitle, `Você recebeu +${result.gained} de XP.`);
+      this.recordLog(contextLabel, `Você recebeu +${result.gained} de XP.`);
     }
 
     if (result.leveledUpCount > 0) {
       this.syncHealth(result.leveledUpCount * 10, false);
       this.recordLog(
-        chapterTitle,
+        contextLabel,
         `Subiu para o Nível ${result.newLevel}! (+${result.pointsAwarded} pontos de atributo e +${result.leveledUpCount * 10} de vitalidade)`
       );
     }
@@ -363,8 +467,12 @@ export class GameEngine {
       fallbackBlockId: enemy.fleeBlock || fallbackBlockId || this.state.blockId,
       lastLog: `${enemy.name} entrou em combate!`
     };
+    const questTitle = this.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = this.getCurrentChapter()?.title || 'Combate';
-    this.recordLog(chapterTitle, `Combate iniciado contra ${enemy.name} (HP: ${enemy.hp}/${enemy.maxHp}).`);
+    this.recordLog(
+      `${questTitle} • ${chapterTitle}`,
+      `Combate iniciado contra ${enemy.name} (HP: ${enemy.hp}/${enemy.maxHp}).`
+    );
     return this.activeCombat;
   }
 
@@ -373,15 +481,19 @@ export class GameEngine {
   }
 
   moveToBlock(blockId) {
+    const quest = this.getCurrentQuest();
     const chapter = this.getCurrentChapter();
-    const block = chapter?.blocks[blockId];
+    const block = chapter?.blocks?.[blockId];
     if (!block) return null;
 
     this.state.blockId = blockId;
     this.syncHealth(0, false);
 
     const matchingLoc = this.getLocations().find(
-      (loc) => loc.chapterIndex === this.state.chapterIndex && loc.blockId === blockId
+      (loc) =>
+        (loc.questIndex ?? 0) === this.state.questIndex &&
+        loc.chapterIndex === this.state.chapterIndex &&
+        loc.blockId === blockId
     );
     if (matchingLoc) {
       this.state.locationId = matchingLoc.id;
@@ -409,7 +521,7 @@ export class GameEngine {
       this.applyHpChange(hpDelta, '', false);
     }
 
-    this.recordLog(chapter.title, block.content);
+    this.recordLog(`${quest?.title || 'Quest'} • ${chapter.title}`, block.content);
 
     const blockXp = block.giveXp ?? block.xp ?? 0;
     if (blockXp > 0) {
@@ -448,16 +560,22 @@ export class GameEngine {
     this.activeCombat = null;
     localStorage.removeItem(SAVE_PREFIX + this.currentBook.id);
 
+    const quests = this.getBookQuests(this.currentBook);
+    const firstQuest = quests[0] || {};
+    const firstChapIdx = firstQuest.startChapter ?? 0;
+    const firstChapter = (firstQuest.chapters || [])[firstChapIdx] || (firstQuest.chapters || [])[0];
     const startLoc = this.getLocations()[0] || null;
     const initialStats = this.buildInitialStats(this.currentBook);
     const initialProgression = ProgressionSystem.createInitialProgression();
 
     this.state = {
-      chapterIndex: 0,
-      unlockedChapter: 0,
+      questIndex: 0,
+      unlockedQuest: 0,
+      chapterIndex: firstChapIdx,
+      unlockedChapter: firstChapIdx,
       locationId: startLoc ? startLoc.id : null,
       visitedLocations: startLoc ? [startLoc.id] : [],
-      blockId: startLoc?.blockId || this.currentBook.chapters[0].startBlock,
+      blockId: firstChapter?.startBlock || startLoc?.blockId,
       inventory: [],
       stats: initialStats,
       health: CombatSystem.createInitialHealth(initialStats, initialProgression.level),

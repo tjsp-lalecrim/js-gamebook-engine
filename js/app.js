@@ -61,8 +61,9 @@ function openWorldMapModal() {
 }
 
 function handlePlayerDefeat() {
+  const questTitle = engine.getCurrentQuest()?.title || 'Quest';
   const chapterTitle = engine.getCurrentChapter()?.title || 'Jornada';
-  engine.recordLog(chapterTitle, 'Seus pontos de vida chegaram a 0. Você caiu em batalha.');
+  engine.recordLog(`${questTitle} • ${chapterTitle}`, 'Seus pontos de vida chegaram a 0. Você caiu em batalha.');
   engine.saveProgress();
   syncHud();
 
@@ -85,6 +86,7 @@ function checkActiveCombatIfAny() {
   const finishCombat = (outcome) => {
     const enemy = combat.enemy;
     const sourceConfig = combat.sourceConfig || enemy;
+    const questTitle = engine.getCurrentQuest()?.title || 'Quest';
     const chapterTitle = engine.getCurrentChapter()?.title || 'Combate';
     engine.clearCombat();
 
@@ -101,7 +103,7 @@ function checkActiveCombatIfAny() {
     }
 
     if (outcome === 'victory') {
-      engine.recordLog(chapterTitle, `${enemy.name} foi derrotado!`);
+      engine.recordLog(`${questTitle} • ${chapterTitle}`, `${enemy.name} foi derrotado!`);
       engine.grantLootFromSource(sourceConfig, false);
       if (enemy.xpReward > 0) {
         engine.gainExperience(enemy.xpReward, false);
@@ -247,19 +249,32 @@ function checkActiveCombatIfAny() {
 }
 
 function loadCurrentBlock() {
+  const quest = engine.getCurrentQuest();
   const chapter = engine.getCurrentChapter();
   const block = engine.getCurrentBlock();
-  if (!block) return;
+  if (!block || !chapter) return;
 
   const currentLoc = engine.getCurrentLocation();
-  ui.renderHeader(engine.currentBook.title, chapter.title, currentLoc);
+  ui.renderHeader(engine.currentBook.title, quest?.title || '', chapter.title, currentLoc);
+
+  ui.renderQuestNav(
+    engine.getBookQuests(),
+    engine.state.questIndex,
+    engine.state.unlockedQuest,
+    (qIdx) => {
+      playSound('click');
+      engine.goToQuest(qIdx);
+      loadCurrentBlock();
+    }
+  );
+
   ui.renderChapterNav(
-    engine.currentBook.chapters,
+    engine.getQuestChapters(engine.state.questIndex),
     engine.state.chapterIndex,
     engine.state.unlockedChapter,
-    (idx) => {
+    (cIdx) => {
       playSound('click');
-      engine.goToChapter(idx);
+      engine.goToChapter(cIdx);
       loadCurrentBlock();
     }
   );
@@ -300,6 +315,19 @@ function applyOptionHealthEffects(option, shouldSave = false) {
   }
 }
 
+function advanceAfterOption(option) {
+  if (option.nextQuest !== undefined) {
+    engine.goToQuest(option.nextQuest, option.nextChapter ?? null, option.nextBlock ?? null);
+    loadCurrentBlock();
+  } else if (option.nextChapter !== undefined) {
+    engine.goToChapter(option.nextChapter, option.nextBlock ?? null);
+    loadCurrentBlock();
+  } else {
+    engine.moveToBlock(option.nextBlock);
+    loadCurrentBlock();
+  }
+}
+
 function handleOptionSelect(option) {
   playSound('click');
 
@@ -337,14 +365,10 @@ function handleOptionSelect(option) {
     return;
   }
 
-  if (option.nextChapter !== undefined) {
-    engine.goToChapter(option.nextChapter);
-    loadCurrentBlock();
-  } else if (option.diceRoll) {
+  if (option.diceRoll) {
     executeDiceCheck(option);
   } else {
-    engine.moveToBlock(option.nextBlock);
-    loadCurrentBlock();
+    advanceAfterOption(option);
   }
 }
 
@@ -387,9 +411,12 @@ function executeDiceCheck(option) {
           return;
         }
 
-        const nextBlockId = result.success ? option.nextBlock : option.failBlock;
-        engine.moveToBlock(nextBlockId);
-        loadCurrentBlock();
+        if (result.success) {
+          advanceAfterOption(option);
+        } else {
+          engine.moveToBlock(option.failBlock);
+          loadCurrentBlock();
+        }
       });
     }
   }, 65);

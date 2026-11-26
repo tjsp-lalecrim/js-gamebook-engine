@@ -74,8 +74,10 @@ export class WorldMapSystem {
 
   static evaluateTravelAvailability(location, state) {
     const unlockedQuest = state?.unlockedQuest ?? 0;
-    const unlockedChapter = state?.unlockedChapter ?? 0;
     const currentQuest = state?.questIndex ?? 0;
+    const targetQuest = location.questIndex ?? currentQuest;
+    const unlockedChapter = state?.unlockedChapters?.[targetQuest] ??
+      (targetQuest === currentQuest ? state?.unlockedChapter ?? 0 : 0);
     const level = state?.progression?.level ?? 1;
     const inventory = Array.isArray(state?.inventory) ? state.inventory : [];
 
@@ -88,8 +90,7 @@ export class WorldMapSystem {
     }
 
     const reqChapter = location.requiredChapter ?? 0;
-    const isSameQuest = (location.questIndex ?? 0) === currentQuest;
-    if (isSameQuest && unlockedChapter < reqChapter) {
+    if (unlockedChapter < reqChapter) {
       return {
         canTravel: false,
         reason: `Requer alcançar o Capítulo ${reqChapter + 1}`

@@ -5,6 +5,7 @@ import { UIManager } from './ui.js';
 
 const engine = new GameEngine();
 const ui = new UIManager();
+const { gameScreen } = ui.elements;
 
 async function init() {
   try {
@@ -15,6 +16,9 @@ async function init() {
     });
   } catch (error) {
     console.error('Erro ao inicializar o jogo:', error);
+    const message = document.getElementById('library-error');
+    message.textContent = 'Não foi possível carregar as campanhas. Abra o jogo por um servidor HTTP e recarregue a página.';
+    message.hidden = false;
   }
 }
 
@@ -83,35 +87,16 @@ function checkActiveCombatIfAny() {
   const combat = engine.activeCombat;
   if (!combat || !combat.enemy) return false;
 
-  const finishCombat = (outcome) => {
-    const enemy = combat.enemy;
-    const sourceConfig = combat.sourceConfig || enemy;
-    const questTitle = engine.getCurrentQuest()?.title || 'Quest';
-    const chapterTitle = engine.getCurrentChapter()?.title || 'Combate';
-    engine.clearCombat();
-
-    if (outcome === 'defeat_player') {
-      handlePlayerDefeat();
-      return;
-    }
-
-    if (outcome === 'flee') {
-      const targetBlock = enemy.fleeBlock || combat.fallbackBlockId || engine.state.blockId;
-      engine.moveToBlock(targetBlock);
-      loadCurrentBlock();
-      return;
-    }
-
-    if (outcome === 'victory') {
-      engine.recordLog(`${questTitle} • ${chapterTitle}`, `${enemy.name} foi derrotado!`);
-      engine.grantLootFromSource(sourceConfig, false);
-      if (enemy.xpReward > 0) {
-        engine.gainExperience(enemy.xpReward, false);
-      }
-      const nextBlock = enemy.defeatBlock || engine.state.blockId;
-      engine.moveToBlock(nextBlock);
-      loadCurrentBlock();
-    }
+  const finishLabels = {
+    defeat_player: 'Encerrar Combate',
+    flee: 'Recuar em Segurança →',
+    victory: 'Coletar Saque e Continuar →'
+  };
+  const renderCombat = () => {
+    ui.modals.updateCombatState(combat, engine.state.health, {
+      isFinished: Boolean(combat.outcome),
+      finishLabel: finishLabels[combat.outcome]
+    });
   };
 
   const runEnemyCounter = (prefixText = '') => {
@@ -127,16 +112,8 @@ function checkActiveCombatIfAny() {
 
       if (hpRes.isDead) {
         combat.lastLog += ' Você caiu sem vida!';
-        engine.saveProgress();
-        ui.modals.updateCombatState(combat, engine.state.health, {
-          isFinished: true,
-          finishLabel: 'Encerrar Combate'
-        });
-        ui.modals.elements.combatFinishBtn.onclick = () => {
-          ui.modals.hideCombatModal();
-          finishCombat('defeat_player');
-        };
-        return true;
+        engine.setCombatOutcome('defeat_player');
+        return;
       }
     } else {
       playSound('click');
@@ -145,10 +122,10 @@ function checkActiveCombatIfAny() {
 
     combat.turn += 1;
     engine.saveProgress();
-    return false;
   };
 
   const onAttack = () => {
+    if (combat.outcome) return;
     playSound('dice');
     const enemy = combat.enemy;
     const result = CombatSystem.resolvePlayerAttack(engine.state.stats, enemy, enemy.attackStat);
@@ -166,22 +143,15 @@ function checkActiveCombatIfAny() {
 
     if (enemy.hp <= 0) {
       combat.lastLog = `${msg}${enemy.defeatText} (+${enemy.xpReward} XP)`;
-      ui.modals.updateCombatState(combat, engine.state.health, {
-        isFinished: true,
-        finishLabel: 'Coletar Saque e Continuar →'
-      });
-      ui.modals.elements.combatFinishBtn.onclick = () => {
-        ui.modals.hideCombatModal();
-        finishCombat('victory');
-      };
-      return;
+      engine.setCombatOutcome('victory');
+    } else {
+      runEnemyCounter(msg);
     }
-
-    runEnemyCounter(msg);
-    ui.modals.updateCombatState(combat, engine.state.health, { isFinished: false });
+    renderCombat();
   };
 
   const onDodge = () => {
+    if (combat.outcome) return;
     playSound('dice');
     const enemy = combat.enemy;
     const dodge = CombatSystem.resolveDodgeAttempt(engine.state.stats, enemy);
@@ -196,28 +166,22 @@ function checkActiveCombatIfAny() {
 
       if (enemy.hp <= 0) {
         combat.lastLog = `Esquiva perfeita!${counterText} ${enemy.defeatText}`;
-        ui.modals.updateCombatState(combat, engine.state.health, {
-          isFinished: true,
-          finishLabel: 'Coletar Saque e Continuar →'
-        });
-        ui.modals.elements.combatFinishBtn.onclick = () => {
-          ui.modals.hideCombatModal();
-          finishCombat('victory');
-        };
+        engine.setCombatOutcome('victory');
+        renderCombat();
         return;
       }
 
       combat.turn += 1;
       combat.lastLog = `Você esquivou do golpe de ${enemy.name} (1d20=${dodge.d20})!${counterText}`;
       engine.saveProgress();
-      ui.modals.updateCombatState(combat, engine.state.health, { isFinished: false });
     } else {
       runEnemyCounter(`Esquiva falhou (1d20=${dodge.d20})! `);
-      ui.modals.updateCombatState(combat, engine.state.health, { isFinished: false });
     }
+    renderCombat();
   };
 
   const onFlee = () => {
+    if (combat.outcome) return;
     playSound('dice');
     const enemy = combat.enemy;
     const flee = CombatSystem.resolveFleeAttempt(engine.state.stats, enemy);
@@ -225,26 +189,24 @@ function checkActiveCombatIfAny() {
     if (flee.success) {
       playSound('success');
       combat.lastLog = `Você conseguiu escapar de ${enemy.name}!`;
-      ui.modals.updateCombatState(combat, engine.state.health, {
-        isFinished: true,
-        finishLabel: 'Recuar em Segurança →'
-      });
-      ui.modals.elements.combatFinishBtn.onclick = () => {
-        ui.modals.hideCombatModal();
-        finishCombat('flee');
-      };
+      engine.setCombatOutcome('flee');
     } else {
       runEnemyCounter(`Tentativa de fuga falhou (1d20=${flee.d20})! `);
-      ui.modals.updateCombatState(combat, engine.state.health, { isFinished: false });
     }
+    renderCombat();
   };
 
   ui.modals.openCombatModal(combat, engine.state.health, {
     onAttack,
     onDodge,
     onFlee,
-    onFinish: () => finishCombat('victory')
+    onFinish: () => {
+      gameScreen.inert = false;
+      if (engine.finishCombat()) loadCurrentBlock();
+    }
   });
+  gameScreen.inert = true;
+  renderCombat();
   return true;
 }
 
@@ -288,67 +250,11 @@ function loadCurrentBlock() {
 
   ui.renderBlockContent(block, () => {
     ui.renderOptions(block.options, engine.state.inventory, engine, handleOptionSelect, handleRestart);
-    checkActiveCombatIfAny();
   });
-}
-
-function applyOptionXp(option, shouldSave = true) {
-  const xpAmount = option.gainXp ?? option.xp ?? 0;
-  if (xpAmount > 0) {
-    const res = engine.gainExperience(xpAmount, shouldSave);
-    if (res.leveledUpCount > 0) {
-      playSound('success');
-    }
-  }
-}
-
-function applyOptionHealthEffects(option, shouldSave = false) {
-  if (option.fullHeal) {
-    engine.restoreFullHealth('Poção / Descanso', false);
-  }
-  const hpDelta = (option.heal ?? option.restoreHp ?? 0) - (option.damage ?? 0);
-  if (hpDelta !== 0) {
-    engine.applyHpChange(hpDelta, '', false);
-  }
-  if (shouldSave) {
-    engine.saveProgress();
-  }
+  checkActiveCombatIfAny();
 }
 
 function advanceAfterOption(option) {
-  if (option.nextQuest !== undefined) {
-    engine.goToQuest(option.nextQuest, option.nextChapter ?? null, option.nextBlock ?? null);
-    loadCurrentBlock();
-  } else if (option.nextChapter !== undefined) {
-    engine.goToChapter(option.nextChapter, option.nextBlock ?? null);
-    loadCurrentBlock();
-  } else {
-    engine.moveToBlock(option.nextBlock);
-    loadCurrentBlock();
-  }
-}
-
-function handleOptionSelect(option) {
-  playSound('click');
-
-  if (option.openMap) {
-    openWorldMapModal();
-    return;
-  }
-
-  if (option.gainStats) engine.applyStatChanges(option.gainStats, false);
-  applyOptionHealthEffects(option, false);
-  applyOptionXp(option, false);
-
-  if (!option.diceRoll) {
-    engine.grantLootFromSource(option, false);
-  }
-
-  if (engine.state.health.hp <= 0) {
-    handlePlayerDefeat();
-    return;
-  }
-
   if (option.enemy) {
     engine.startCombat(option.enemy, option.nextBlock || engine.state.blockId);
     engine.saveProgress();
@@ -357,18 +263,48 @@ function handleOptionSelect(option) {
     return;
   }
 
+  let destination;
   if (option.travelToLocation) {
-    const moved = engine.travelToLocation(option.travelToLocation);
-    if (moved) {
-      loadCurrentBlock();
-    }
+    destination = engine.travelToLocation(option.travelToLocation);
+  } else if (option.nextQuest !== undefined) {
+    destination = engine.goToQuest(option.nextQuest, option.nextChapter ?? null, option.nextBlock ?? null);
+  } else if (option.nextChapter !== undefined) {
+    destination = engine.goToChapter(option.nextChapter, option.nextBlock ?? null);
+  } else {
+    destination = engine.moveToBlock(option.nextBlock);
+  }
+  if (!destination) engine.saveProgress();
+  loadCurrentBlock();
+}
+
+function resolveOption(option, success) {
+  const result = engine.applyOptionEffects(option, success);
+  if (result?.leveledUpCount > 0) playSound('success');
+
+  if (engine.state.health.hp <= 0) {
+    handlePlayerDefeat();
+  } else if (success) {
+    advanceAfterOption(option);
+  } else {
+    if (!engine.moveToBlock(option.failBlock)) engine.saveProgress();
+    loadCurrentBlock();
+  }
+}
+
+function handleOptionSelect(option) {
+  if (engine.activeCombat || engine.state.health.hp <= 0) return;
+  if (option.requiredItem && !engine.state.inventory.includes(option.requiredItem)) return;
+  playSound('click');
+
+  if (option.openMap) {
+    openWorldMapModal();
     return;
   }
 
   if (option.diceRoll) {
     executeDiceCheck(option);
   } else {
-    advanceAfterOption(option);
+    resolveOption(option, true);
   }
 }
 
@@ -377,6 +313,7 @@ function executeDiceCheck(option) {
   const statVal = engine.state.stats[stat] ?? 50;
 
   ui.modals.showDiceCheck(stat, dc, statVal);
+  gameScreen.inert = true;
 
   let ticks = 0;
   const maxTicks = 14;
@@ -394,29 +331,10 @@ function executeDiceCheck(option) {
       playSound(result.success ? 'success' : 'fail');
 
       ui.modals.finalizeDiceCheck(result, () => {
+        gameScreen.inert = false;
         playSound('click');
 
-        if (result.success) {
-          if (option.gainStats) {
-            engine.applyStatChanges(option.gainStats, false);
-          }
-          engine.grantLootFromSource(option, false);
-          applyOptionXp(option, false);
-        } else if (option.failDamage > 0) {
-          engine.applyHpChange(-option.failDamage, 'Falha no Teste', false);
-        }
-
-        if (engine.state.health.hp <= 0) {
-          handlePlayerDefeat();
-          return;
-        }
-
-        if (result.success) {
-          advanceAfterOption(option);
-        } else {
-          engine.moveToBlock(option.failBlock);
-          loadCurrentBlock();
-        }
+        resolveOption(option, result.success);
       });
     }
   }, 65);
@@ -442,11 +360,7 @@ function handleRestart() {
 
 // Eventos de Digitação e Controles Gerais
 ui.elements.text.addEventListener('click', () => {
-  if (ui.skipTypewriter()) {
-    const block = engine.getCurrentBlock();
-    ui.renderOptions(block.options, engine.state.inventory, engine, handleOptionSelect, handleRestart);
-    checkActiveCombatIfAny();
-  }
+  ui.skipTypewriter();
 });
 
 ui.elements.audioToggleBtn.addEventListener('click', () => {

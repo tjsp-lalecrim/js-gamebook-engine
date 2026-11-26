@@ -426,5 +426,6 @@ export class ModalManager {
 
   hideDiceCheck() {
     this.elements.diceModal.classList.add('hidden');
+    this.elements.diceContinueBtn.onclick = null;
   }
 }

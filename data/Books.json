@@ -49,7 +49,7 @@
         "description": "O coração congelado do labirinto, guardado por constructos e selos arcanos.",
         "questIndex": 1,
         "chapterIndex": 1,
-        "blockId": "salao_cajado",
+        "blockId": "camara_runas_bloco",
         "requiredQuest": 1,
         "requiredChapter": 1
       },
@@ -320,11 +320,13 @@
                   ],
                   "defeatBlock": "conclusao_quest_2",
                   "fleeBlock": "entrada_ruinas",
+                  "fleeChapter": 0,
                   "defeatText": "O Sentinela se desfaz em estilhaços luminosos!"
                 },
                 "options": [
                   {
                     "text": "Retornar à entrada do templo",
+                    "nextChapter": 0,
                     "nextBlock": "entrada_ruinas"
                   }
                 ]

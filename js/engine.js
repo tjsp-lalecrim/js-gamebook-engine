@@ -12,7 +12,6 @@ export class GameEngine {
     this.defaultStats = {};
     this.currentBook = null;
     this.state = this.createEmptyState();
-    this.activeCombat = null;
   }
 
   createEmptyState() {
@@ -23,6 +22,10 @@ export class GameEngine {
       unlockedQuest: 0,
       chapterIndex: 0,
       unlockedChapter: 0,
+      unlockedChapters: {},
+      visitedBlocks: [],
+      rewardedCombats: [],
+      activeCombat: null,
       locationId: null,
       visitedLocations: [],
       blockId: null,
@@ -32,6 +35,24 @@ export class GameEngine {
       progression: initialProgression,
       history: []
     };
+  }
+
+  get activeCombat() {
+    return this.state.activeCombat;
+  }
+
+  set activeCombat(combat) {
+    this.state.activeCombat = combat;
+  }
+
+  getUnlockedChapter(questIndex) {
+    return this.state.unlockedChapters[questIndex] ?? (this.getBookQuests()[questIndex]?.startChapter ?? 0);
+  }
+
+  unlockChapter(questIndex, chapterIndex) {
+    const unlocked = Math.max(chapterIndex, this.getUnlockedChapter(questIndex));
+    this.state.unlockedChapters[questIndex] = unlocked;
+    this.state.unlockedChapter = unlocked;
   }
 
   normalizeHistoryEntries(rawHistory) {
@@ -120,7 +141,35 @@ export class GameEngine {
     const chapters = this.getQuestChapters(questIndex);
     const maxChapIdx = Math.max(0, chapters.length - 1);
     const chapterIndex = Math.max(0, Math.min(maxChapIdx, savedState?.chapterIndex ?? 0));
-    const unlockedChapter = Math.max(chapterIndex, Math.min(maxChapIdx, savedState?.unlockedChapter ?? chapterIndex));
+    const visitedLocations = Array.isArray(savedState?.visitedLocations) ? savedState.visitedLocations : [];
+    const history = this.normalizeHistoryEntries(savedState?.history);
+    const unlockedChapters = { ...savedState?.unlockedChapters };
+    for (const location of this.getLocations()) {
+      if (visitedLocations.includes(location.id)) {
+        const qIdx = location.questIndex ?? 0;
+        unlockedChapters[qIdx] = Math.max(unlockedChapters[qIdx] ?? 0, location.chapterIndex ?? 0);
+      }
+    }
+    if (!savedState?.unlockedChapters && quests.length === 1) {
+      unlockedChapters[questIndex] = savedState?.unlockedChapter;
+    }
+    const unlockedChapter = Math.max(chapterIndex, Math.min(maxChapIdx, unlockedChapters[questIndex] ?? chapterIndex));
+    unlockedChapters[questIndex] = unlockedChapter;
+    const visitedBlocks = Array.isArray(savedState?.visitedBlocks) ? savedState.visitedBlocks : [];
+    if (!Array.isArray(savedState?.visitedBlocks)) {
+      for (const [qIdx, quest] of quests.entries()) {
+        for (const [cIdx, chapter] of (quest.chapters || []).entries()) {
+          for (const [blockId, block] of Object.entries(chapter.blocks || {})) {
+            if (history.some(entry => entry.questTitle === quest.title && entry.chapterTitle === chapter.title && entry.message === block.content)) {
+              visitedBlocks.push(JSON.stringify([qIdx, cIdx, blockId]));
+            }
+          }
+        }
+      }
+      if (savedState?.blockId) {
+        visitedBlocks.push(JSON.stringify([questIndex, chapterIndex, savedState.blockId]));
+      }
+    }
 
     const normalized = {
       ...base,
@@ -129,12 +178,14 @@ export class GameEngine {
       unlockedQuest,
       chapterIndex,
       unlockedChapter,
-      visitedLocations: Array.isArray(savedState?.visitedLocations) ? savedState.visitedLocations : [],
+      unlockedChapters,
+      visitedBlocks,
+      visitedLocations,
       inventory: Array.isArray(savedState?.inventory) ? savedState.inventory : [],
       stats,
       health,
       progression: mergedProgression,
-      history: this.normalizeHistoryEntries(savedState?.history)
+      history
     };
 
     if (this.currentBook) {
@@ -151,9 +202,9 @@ export class GameEngine {
   async loadGameData() {
     try {
       const [booksRes, statsRes, itemsRes] = await Promise.all([
-        fetch('./data/books.json'),
+        fetch('./data/Books.json'),
         fetch('./data/Stats.json'),
-        fetch('./data/items.json').catch(() => null)
+        fetch('./data/Items.json').catch(() => null)
       ]);
 
       if (!booksRes.ok || !statsRes.ok) {
@@ -164,10 +215,7 @@ export class GameEngine {
       const statsData = await statsRes.json();
       this.defaultStats = statsData.defaultStats || {};
 
-      if (itemsRes && itemsRes.ok) {
-        const itemsData = await itemsRes.json();
-        LootSystem.setCatalogFromData(itemsData);
-      }
+      if (itemsRes?.ok) LootSystem.setCatalogFromData(await itemsRes.json());
 
       return { books: this.allBooks, stats: this.defaultStats };
     } catch (error) {
@@ -185,14 +233,25 @@ export class GameEngine {
 
   openBook(book) {
     this.currentBook = book;
-    this.activeCombat = null;
     const savedData = localStorage.getItem(SAVE_PREFIX + book.id);
 
     if (savedData) {
-      this.state = this.normalizeLoadedState(JSON.parse(savedData));
+      const savedState = JSON.parse(savedData);
+      this.state = this.normalizeLoadedState(savedState);
+      const block = this.getCurrentBlock();
+      if (!Object.prototype.hasOwnProperty.call(savedState, 'activeCombat') && block?.enemy && this.state.health.hp > 0) {
+        this.startCombat(block.enemy, this.state.blockId);
+        this.saveProgress();
+      }
       return this.state;
     }
 
+    this.initializeBookState();
+    return this.state;
+  }
+
+  initializeBookState() {
+    const book = this.currentBook;
     const quests = this.getBookQuests(book);
     const firstQuest = quests[0] || {};
     const firstChapIdx = firstQuest.startChapter ?? 0;
@@ -202,10 +261,12 @@ export class GameEngine {
     const initialProgression = ProgressionSystem.createInitialProgression();
 
     this.state = {
+      ...this.createEmptyState(),
       questIndex: 0,
       unlockedQuest: 0,
       chapterIndex: firstChapIdx,
       unlockedChapter: firstChapIdx,
+      unlockedChapters: { 0: firstChapIdx },
       locationId: startLoc ? startLoc.id : null,
       visitedLocations: startLoc ? [startLoc.id] : [],
       blockId: firstChapter?.startBlock || startLoc?.blockId,
@@ -216,8 +277,7 @@ export class GameEngine {
       history: []
     };
 
-    this.moveToBlock(this.state.blockId);
-    return this.state;
+    return this.moveToBlock(this.state.blockId);
   }
 
   getLocations() {
@@ -259,9 +319,7 @@ export class GameEngine {
     }
 
     this.state.chapterIndex = targetChapterIdx;
-    if (targetChapterIdx > this.state.unlockedChapter) {
-      this.state.unlockedChapter = targetChapterIdx;
-    }
+    this.unlockChapter(targetQuestIdx, targetChapterIdx);
 
     this.state.locationId = location.id;
     if (!this.state.visitedLocations.includes(location.id)) {
@@ -297,22 +355,17 @@ export class GameEngine {
     const quest = quests[questIdx];
     if (!quest) return null;
 
-    this.state.questIndex = questIdx;
-    if (questIdx > this.state.unlockedQuest) {
-      this.state.unlockedQuest = questIdx;
-    }
-
     const chapters = quest.chapters || [];
     const targetChapIdx = chapterIdx !== null ? chapterIdx : (quest.startChapter ?? 0);
-    const chapter = chapters[targetChapIdx] || chapters[0];
-    if (!chapter) return null;
+    const chapter = chapters[targetChapIdx];
+    const targetBlockId = blockId || chapter?.startBlock;
+    if (!chapter?.blocks?.[targetBlockId]) return null;
 
-    this.state.chapterIndex = Math.max(0, chapters.indexOf(chapter));
-    if (this.state.chapterIndex > this.state.unlockedChapter) {
-      this.state.unlockedChapter = this.state.chapterIndex;
-    }
-
-    const targetBlockId = blockId || chapter.startBlock;
+    this.state.questIndex = questIdx;
+    this.state.unlockedQuest = Math.max(questIdx, this.state.unlockedQuest);
+    this.state.chapterIndex = targetChapIdx;
+    this.unlockChapter(questIdx, targetChapIdx);
+    this.state.locationId = null;
     this.recordLog(chapter.title, `Quest iniciada: ${quest.title}.`, quest.title);
     return this.moveToBlock(targetBlockId);
   }
@@ -322,14 +375,15 @@ export class GameEngine {
     const chapter = chapters[index];
     if (!chapter) return null;
 
-    this.state.chapterIndex = index;
-    if (index > this.state.unlockedChapter) {
-      this.state.unlockedChapter = index;
-    }
-
     const matchingLoc = this.getLocations().find(
       (loc) => (loc.questIndex ?? 0) === this.state.questIndex && loc.chapterIndex === index
     );
+    const targetBlockId = blockId || matchingLoc?.blockId || chapter.startBlock;
+    if (!chapter.blocks?.[targetBlockId]) return null;
+
+    this.state.chapterIndex = index;
+    this.unlockChapter(this.state.questIndex, index);
+    this.state.locationId = null;
     if (matchingLoc) {
       this.state.locationId = matchingLoc.id;
       if (!this.state.visitedLocations.includes(matchingLoc.id)) {
@@ -337,7 +391,7 @@ export class GameEngine {
       }
     }
 
-    return this.moveToBlock(blockId || matchingLoc?.blockId || chapter.startBlock);
+    return this.moveToBlock(targetBlockId);
   }
 
   recordLog(chapterTitle, message, questTitle = null) {
@@ -388,6 +442,7 @@ export class GameEngine {
   }
 
   useInventoryItem(itemIndex) {
+    if (this.state.health.hp <= 0) return null;
     if (!Array.isArray(this.state.inventory)) return null;
     if (itemIndex < 0 || itemIndex >= this.state.inventory.length) return null;
 
@@ -518,11 +573,27 @@ export class GameEngine {
     return allocated;
   }
 
+  applyOptionEffects(option, success = true) {
+    if (!success) {
+      if (option.failDamage > 0) this.applyHpChange(-option.failDamage, 'Falha no Teste', false);
+      return;
+    }
+
+    if (option.gainStats) this.applyStatChanges(option.gainStats, false);
+    if (option.fullHeal) this.restoreFullHealth('Poção / Descanso', false);
+    const hpDelta = (option.heal ?? option.restoreHp ?? 0) - (option.damage ?? 0);
+    if (hpDelta !== 0) this.applyHpChange(hpDelta, '', false);
+    if (this.state.health.hp <= 0) return;
+    this.grantLootFromSource(option, false);
+    return this.gainExperience(option.gainXp ?? option.xp ?? 0, false);
+  }
+
   startCombat(enemyConfig, fallbackBlockId = null) {
     const enemy = CombatSystem.createEnemyState(enemyConfig);
     this.activeCombat = {
       enemy,
       sourceConfig: enemyConfig,
+      outcome: null,
       turn: 1,
       fallbackBlockId: enemy.fleeBlock || fallbackBlockId || this.state.blockId,
       lastLog: `${enemy.name} entrou em combate!`
@@ -537,8 +608,38 @@ export class GameEngine {
     return this.activeCombat;
   }
 
-  clearCombat() {
+  setCombatOutcome(outcome) {
+    if (!this.activeCombat || this.activeCombat.outcome) return;
+    this.activeCombat.outcome = outcome;
+    this.saveProgress();
+  }
+
+  finishCombat() {
+    const combat = this.activeCombat;
+    if (!combat?.outcome) return null;
+    const { enemy, sourceConfig, outcome } = combat;
     this.activeCombat = null;
+
+    if (outcome === 'victory') {
+      const rewardKey = JSON.stringify([this.state.questIndex, this.state.chapterIndex, this.state.blockId, enemy.id]);
+      this.recordLog(this.getCurrentChapter()?.title, `${enemy.name} foi derrotado!`);
+      if (!this.state.rewardedCombats.includes(rewardKey)) {
+        this.state.rewardedCombats.push(rewardKey);
+        this.grantLootFromSource(sourceConfig, false);
+        this.gainExperience(enemy.xpReward, false);
+      }
+      if (enemy.defeatBlock && enemy.defeatBlock !== this.state.blockId && this.moveToBlock(enemy.defeatBlock)) {
+        return outcome;
+      }
+    } else if (outcome === 'flee') {
+      const target = enemy.fleeBlock || combat.fallbackBlockId;
+      const destination = enemy.fleeChapter != null
+        ? this.goToChapter(enemy.fleeChapter, target)
+        : target && target !== this.state.blockId && this.moveToBlock(target);
+      if (destination) return outcome;
+    }
+    this.saveProgress();
+    return outcome;
   }
 
   moveToBlock(blockId) {
@@ -563,13 +664,16 @@ export class GameEngine {
       }
     }
 
-    this.grantLootFromSource(block, false);
+    const visitKey = JSON.stringify([this.state.questIndex, this.state.chapterIndex, blockId]);
+    const firstVisit = !this.state.visitedBlocks.includes(visitKey);
+    if (firstVisit) this.state.visitedBlocks.push(visitKey);
+    if (firstVisit || block.repeatRewards) this.grantLootFromSource(block, false);
 
-    if (block.gainStats) {
+    if ((firstVisit || block.repeatRewards) && block.gainStats) {
       this.applyStatChanges(block.gainStats, false);
     }
 
-    if (block.modifyStats) {
+    if ((firstVisit || block.repeatRewards) && block.modifyStats) {
       this.applyStatChanges(block.modifyStats, false);
     }
 
@@ -585,7 +689,7 @@ export class GameEngine {
     this.recordLog(chapter.title, block.content, quest?.title || 'Quest');
 
     const blockXp = block.giveXp ?? block.xp ?? 0;
-    if (blockXp > 0) {
+    if ((firstVisit || block.repeatRewards) && blockXp > 0) {
       this.gainExperience(blockXp, false);
     }
 
@@ -618,33 +722,7 @@ export class GameEngine {
 
   restartGame() {
     if (!this.currentBook) return null;
-    this.activeCombat = null;
-    localStorage.removeItem(SAVE_PREFIX + this.currentBook.id);
-
-    const quests = this.getBookQuests(this.currentBook);
-    const firstQuest = quests[0] || {};
-    const firstChapIdx = firstQuest.startChapter ?? 0;
-    const firstChapter = (firstQuest.chapters || [])[firstChapIdx] || (firstQuest.chapters || [])[0];
-    const startLoc = this.getLocations()[0] || null;
-    const initialStats = this.buildInitialStats(this.currentBook);
-    const initialProgression = ProgressionSystem.createInitialProgression();
-
-    this.state = {
-      questIndex: 0,
-      unlockedQuest: 0,
-      chapterIndex: firstChapIdx,
-      unlockedChapter: firstChapIdx,
-      locationId: startLoc ? startLoc.id : null,
-      visitedLocations: startLoc ? [startLoc.id] : [],
-      blockId: firstChapter?.startBlock || startLoc?.blockId,
-      inventory: [],
-      stats: initialStats,
-      health: CombatSystem.createInitialHealth(initialStats, initialProgression.level),
-      progression: initialProgression,
-      history: []
-    };
-
-    return this.moveToBlock(this.state.blockId);
+    return this.initializeBookState();
   }
 
   getSuccessChance(stat, dc) {

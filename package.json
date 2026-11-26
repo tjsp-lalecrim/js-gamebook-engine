@@ -1,0 +1,8 @@
+{
+  "name": "js-gamebook-engine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node scripts/check-game.js"
+  }
+}

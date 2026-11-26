@@ -157,6 +157,7 @@ export class UIManager {
     this.elements.text.textContent = '';
     let index = 0;
     this.isTyping = true;
+    this.onCompleteTyping = callback;
     const speed = 14;
 
     const type = () => {
@@ -166,7 +167,7 @@ export class UIManager {
         this.typingTimeout = setTimeout(type, speed);
       } else {
         this.isTyping = false;
-        if (callback) callback();
+        this.finishTypewriter();
       }
     };
     type();
@@ -176,10 +177,17 @@ export class UIManager {
     if (this.isTyping) {
       clearTimeout(this.typingTimeout);
       this.elements.text.textContent = this.currentFullText;
-      this.isTyping = false;
+      this.finishTypewriter();
       return true;
     }
     return false;
+  }
+
+  finishTypewriter() {
+    this.isTyping = false;
+    const callback = this.onCompleteTyping;
+    this.onCompleteTyping = null;
+    if (callback) callback();
   }
 
   renderOptions(options, inventory, engine, onSelectOption, onRestart) {

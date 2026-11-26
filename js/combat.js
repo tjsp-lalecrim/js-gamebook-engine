@@ -41,7 +41,7 @@ export class CombatSystem {
     };
   }
 
-  static healFull(health, stats = {}, level = 1) {
+  static healFull(stats = {}, level = 1) {
     const maxHp = this.calculateMaxHp(stats, level);
     return {
       hp: maxHp,
@@ -68,6 +68,7 @@ export class CombatSystem {
       xpReward: Math.max(0, Number(enemyConfig.xpReward ?? 40)),
       defeatBlock: enemyConfig.defeatBlock || null,
       fleeBlock: enemyConfig.fleeBlock || null,
+      fleeChapter: enemyConfig.fleeChapter ?? null,
       defeatText: enemyConfig.defeatText || 'Você derrotou o inimigo!'
     };
   }
